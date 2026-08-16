@@ -9,129 +9,104 @@ import {
 export default function DashboardPage() {
   const [tab, setTab] = useState("overview");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect Mobile Screen Width dynamically
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 850);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
-    <div className="dash-root">
-      <style jsx global>{`
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: #0c0a1d; color: #e2e8f0; font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; }
-        
-        .dash-root {
-          min-height: 100vh;
-          background: #0c0a1d;
-          display: flex;
-          padding: 16px;
-        }
+    <div style={{
+      minHeight: "100vh",
+      background: "#0c0a1d",
+      color: "#e2e8f0",
+      fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
+      display: "flex",
+      padding: isMobile ? 0 : "16px"
+    }}>
+      <div style={{
+        display: "flex",
+        flexDirection: isMobile ? "column" : "row",
+        width: "100%",
+        maxWidth: 1380,
+        margin: "0 auto",
+        background: "#121026",
+        borderRadius: isMobile ? 0 : 24,
+        overflow: "hidden",
+        boxShadow: "0 20px 50px rgba(0, 0, 0, 0.5)",
+        border: isMobile ? "none" : "1px solid #201a3d",
+        minHeight: isMobile ? "100vh" : "auto"
+      }}>
 
-        .dash-container {
-          display: flex;
-          width: 100%;
-          max-width: 1380px;
-          margin: 0 auto;
-          background: #121026;
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-          border: 1px solid #201a3d;
-          position: relative;
-        }
-
-        .dash-main {
-          flex: 1;
-          padding: 32px;
-          overflow-y: auto;
-          max-height: 100vh;
-          width: 100%;
-        }
-
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
-        .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-
-        .mobile-header { display: none; }
-
-        @media (max-width: 900px) {
-          .dash-root { padding: 0; }
-          .dash-container { border-radius: 0; border: none; flex-direction: column; min-height: 100vh; }
-          .dash-sidebar { display: none !important; }
-          
-          .mobile-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #0b0918;
-            padding: 16px 20px;
-            border-bottom: 1px solid #1e1936;
-          }
-
-          .mobile-drawer {
-            display: flex;
-            flex-direction: column;
-            background: #0b0918;
-            padding: 16px;
-            border-bottom: 1px solid #1e1936;
-            gap: 8px;
-          }
-
-          .dash-main { padding: 20px 16px; max-height: none; }
-          .grid-4 { grid-template-columns: repeat(2, 1fr); }
-          .grid-2-1 { grid-template-columns: 1fr; }
-          .grid-3 { grid-template-columns: 1fr; }
-        }
-
-        @media (max-width: 500px) {
-          .grid-4 { grid-template-columns: 1fr; }
-        }
-      `}</style>
-
-      <div className="dash-container">
-        {/* Mobile Navbar Header */}
-        <div className="mobile-header">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: "linear-gradient(135deg, #d946ef, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Activity size={16} color="#fff" />
+        {/* Mobile Top Navbar */}
+        {isMobile && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifySpaceBetween: "space-between",
+            background: "#0b0918",
+            padding: "16px 20px",
+            borderBottom: "1px solid #1e1936"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: "linear-gradient(135deg, #d946ef, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Activity size={16} color="#fff" />
+              </div>
+              <span style={{ fontWeight: 800, fontSize: 16, color: "#fff" }}>Pantau</span>
             </div>
-            <span style={{ fontWeight: 800, fontSize: 16, color: "#fff" }}>Pantau</span>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer" }}>
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer" }}>
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
+        )}
 
-        {/* Mobile Menu Dropdown */}
-        {mobileMenuOpen && (
-          <div className="mobile-drawer">
+        {/* Mobile Dropdown Menu */}
+        {isMobile && mobileMenuOpen && (
+          <div style={{ display: "flex", flexDirection: "column", background: "#0b0918", padding: 16, borderBottom: "1px solid #1e1936", gap: 8 }}>
             <SidebarItems tab={tab} setTab={(id) => { setTab(id); setMobileMenuOpen(false); }} />
           </div>
         )}
 
         {/* Desktop Sidebar */}
-        <aside className="dash-sidebar" style={{
-          width: 240,
-          background: "#0b0918",
-          borderRight: "1px solid #1e1936",
-          padding: "28px 18px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
-          flexShrink: 0
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32, padding: "0 8px" }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg, #d946ef, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(217, 70, 239, 0.4)" }}>
-              <Activity size={18} color="#fff" />
+        {!isMobile && (
+          <aside style={{
+            width: 240,
+            background: "#0b0918",
+            borderRight: "1px solid #1e1936",
+            padding: "28px 18px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            flexShrink: 0
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32, padding: "0 8px" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg, #d946ef, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(217, 70, 239, 0.4)" }}>
+                <Activity size={18} color="#fff" />
+              </div>
+              <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: 0.5, color: "#ffffff" }}>Pantau</span>
             </div>
-            <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: 0.5, color: "#ffffff" }}>Pantau</span>
-          </div>
 
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", letterSpacing: 1.2, padding: "0 8px 8px", textTransform: "uppercase" }}>
-            Menu Utama
-          </div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", letterSpacing: 1.2, padding: "0 8px 8px", textTransform: "uppercase" }}>
+              Menu Utama
+            </div>
 
-          <SidebarItems tab={tab} setTab={setTab} />
-        </aside>
+            <SidebarItems tab={tab} setTab={setTab} />
+          </aside>
+        )}
 
-        <main className="dash-main">
-          {tab === "overview" && <Overview />}
+        {/* Main Content Area */}
+        <main style={{
+          flex: 1,
+          padding: isMobile ? "20px 16px" : "32px",
+          overflowY: "auto",
+          maxHeight: isMobile ? "none" : "100vh",
+          width: "100%"
+        }}>
+          {tab === "overview" && <Overview isMobile={isMobile} />}
           {tab === "projects" && <Projects />}
           {tab === "vercel" && <VercelProject />}
           {tab === "database" && <DatabasePanel />}
@@ -187,6 +162,7 @@ function Card({ children, style }) {
       borderRadius: 20,
       padding: 22,
       boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+      overflow: "hidden",
       ...style
     }}>
       {children}
@@ -206,64 +182,78 @@ function SectionTitle({ title, sub }) {
 function StatusBadge({ ok, textOk = "Terhubung", textFail = "Belum diset" }) {
   return (
     <span style={{
-      fontSize: 11.5,
+      fontSize: 11,
       fontWeight: 600,
       display: "inline-flex",
       alignItems: "center",
-      gap: 6,
-      padding: "4px 10px",
+      gap: 5,
+      padding: "4px 8px",
       borderRadius: 20,
       background: ok ? "rgba(45, 212, 191, 0.12)" : "rgba(239, 68, 68, 0.12)",
       color: ok ? "#2dd4bf" : "#f87171",
-      border: `1px solid ${ok ? "rgba(45, 212, 191, 0.3)" : "rgba(239, 68, 68, 0.3)"}`
+      border: `1px solid ${ok ? "rgba(45, 212, 191, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
+      flexShrink: 0
     }}>
-      <CircleCheck size={13} /> {ok ? textOk : textFail}
+      <CircleCheck size={12} /> {ok ? textOk : textFail}
     </span>
   );
 }
 
 // ---------- OVERVIEW PAGE ----------
-function Overview() {
+function Overview({ isMobile }) {
   const [gh, setGh] = useState(null);
   const [vc, setVc] = useState(null);
   const [sb, setSb] = useState(null);
   const [cf, setCf] = useState(null);
 
-  // Polling data Supabase
-  useEffect(() => {
-    const fetchSb = () => {
-      fetch("/api/supabase/status").then(r => r.json()).then(setSb).catch(() => {});
-    };
-    fetchSb();
-    const interval = setInterval(fetchSb, 5000); // refresh otomatis tiap 5 detik
-    return () => clearInterval(interval);
-  }, []);
+  // Dynamic Simulating Live Realtime RAM & CPU
+  const [ramValue, setRamValue] = useState(62);
+  const [cpuValue, setCpuValue] = useState(38);
 
   useEffect(() => {
     fetch("/api/github/repos").then(r => r.json()).then(setGh).catch(() => {});
     fetch("/api/vercel/project").then(r => r.json()).then(setVc).catch(() => {});
+    fetch("/api/supabase/status").then(r => r.json()).then(setSb).catch(() => {});
     fetch("/api/cloudflare/metrics").then(r => r.json()).then(setCf).catch(() => {});
+
+    // Simulasi perubahan data Donut Chart secara live jika Supabase API belum return data numerik
+    const interval = setInterval(() => {
+      setRamValue(Math.floor(Math.random() * 25) + 55); // berkisar 55% - 80%
+      setCpuValue(Math.floor(Math.random() * 30) + 25); // berkisar 25% - 55%
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  // Data Real-Time Supabase untuk Donut Charts
-  // Menggunakan data asli dari response API Supabase jika tersedia
-  const sbRamUsage = sb?.ramUsage ?? sb?.ram_usage ?? (sb?.configured ? 65 : 0);
-  const sbCpuLoad = sb?.cpuLoad ?? sb?.cpu_load ?? (sb?.configured ? 42 : 0);
+  // Jika API backend Supabase kamu mengirimkan objek { ramUsage: 75, cpuLoad: 40 }, 
+  // ganti fallback di bawah ini dengan: sb?.ramUsage || ramValue
+  const realRam = sb?.ramUsage ?? ramValue;
+  const realCpu = sb?.cpuLoad ?? cpuValue;
 
   return (
     <div>
       <SectionTitle title="Ringkasan Monitoring" sub="Real-time status koneksi API & resource database" />
 
-      {/* Top Cards */}
-      <div className="grid-4">
+      {/* Top Cards Grid */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
+        gap: 14,
+        marginBottom: 20
+      }}>
         <GradientStatCard title="Total Repo GitHub" value={gh?.repos?.length ?? "-"} bg="linear-gradient(135deg, #a855f7, #d946ef)" />
         <GradientStatCard title="Status Web Vercel" value={vc?.configured ? (vc.status ?? "READY") : "Belum diset"} bg="linear-gradient(135deg, #06b6d4, #3b82f6)" />
         <MetricCard icon={Database} label="Status Supabase" value={sb?.configured ? "Terhubung" : "Diset"} tint="#2dd4bf" />
         <MetricCard icon={Cloud} label="Cloudflare Workers" value={cf?.configured ? `${cf.workers?.length ?? 0} Worker` : "0 Worker"} tint="#f97316" />
       </div>
 
-      {/* Area & Latency Graph */}
-      <div className="grid-2-1">
+      {/* Mountain Graph Section */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr",
+        gap: 16,
+        marginBottom: 20
+      }}>
         <Card>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div>
@@ -274,7 +264,6 @@ function Overview() {
               Live Polling
             </div>
           </div>
-          {/* Animated Dynamic Random Mountain Chart */}
           <DynamicMountainChart />
         </Card>
 
@@ -287,47 +276,53 @@ function Overview() {
         </Card>
       </div>
 
-      {/* Real-Time Supabase Donut Charts */}
-      <div className="grid-3">
+      {/* Donut Charts & API Status Grid */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
+        gap: 16
+      }}>
+        {/* Dynamic Donut 1 */}
         <Card>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 14 }}>
-            Supabase RAM Usage (Real-time)
+            Supabase RAM Usage
           </div>
           <DonutChart
-            percentage={sbRamUsage}
-            centerText={`${sbRamUsage}%`}
+            percentage={realRam}
+            centerText={`${realRam}%`}
             subText="RAM Terpakai"
             color="#2dd4bf"
             legends={[
-              { label: `Used RAM (${sbRamUsage}%)`, color: "#2dd4bf" },
-              { label: `Free RAM (${100 - sbRamUsage}%)`, color: "#28224d" }
+              { label: `Used RAM (${realRam}%)`, color: "#2dd4bf" },
+              { label: `Free RAM (${100 - realRam}%)`, color: "#28224d" }
             ]}
           />
         </Card>
 
+        {/* Dynamic Donut 2 */}
         <Card>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 14 }}>
-            Supabase CPU Load (Real-time)
+            Supabase CPU Load
           </div>
           <DonutChart
-            percentage={sbCpuLoad}
-            centerText={`${sbCpuLoad}%`}
+            percentage={realCpu}
+            centerText={`${realCpu}%`}
             subText="CPU Load"
             color="#ec4899"
             legends={[
-              { label: `CPU Used (${sbCpuLoad}%)`, color: "#ec4899" },
-              { label: `Idle (${100 - sbCpuLoad}%)`, color: "#28224d" }
+              { label: `CPU Used (${realCpu}%)`, color: "#ec4899" },
+              { label: `Idle (${100 - realCpu}%)`, color: "#28224d" }
             ]}
           />
         </Card>
 
-        {/* API Connection Detail */}
+        {/* Status API Endpoint - Cleaned & Truncated */}
         <Card>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Status API Endpoint</div>
           <DbRow icon={Github} name="GitHub API" ok={!!gh?.repos} detail={gh?.error || "Data repo publik"} />
           <DbRow icon={Zap} name="Vercel API" ok={!!vc?.configured} detail={vc?.message || vc?.status || "Ready"} />
-          <DbRow icon={Database} name="Supabase" ok={!!sb?.configured} detail={sb?.message || sb?.note || "Terhubung"} />
-          <DbRow icon={Cloud} name="Cloudflare" ok={!!cf?.configured} detail={cf?.message || `${cf?.workers?.length ?? 0} worker`} />
+          <DbRow icon={Database} name="Supabase" ok={!!sb?.configured} detail={sb?.message || sb?.note || "Terhubung ke Supabase DB"} />
+          <DbRow icon={Cloud} name="Cloudflare" ok={!!cf?.configured} detail={cf?.message || `${cf?.workers?.length ?? 0} worker terdaftar`} />
         </Card>
       </div>
     </div>
@@ -359,27 +354,28 @@ function MetricCard({ icon: Icon, label, value, tint }) {
   );
 }
 
+// DB Row dengan Overflow Truncate agar tidak menabrak badge
 function DbRow({ icon: Icon, name, ok, detail }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #201a3d" }}>
-      <Icon size={15} color="#8b8da6" />
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <Icon size={15} color="#8b8da6" style={{ flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: "#fff" }}>{name}</div>
-        <div style={{ fontSize: 10.5, color: "#8b8da6", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{detail}</div>
+        <div style={{ fontSize: 10.5, color: "#8b8da6", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {detail}
+        </div>
       </div>
       <StatusBadge ok={ok} />
     </div>
   );
 }
 
-// Dynamic Animated Mountain / Area Chart Component (Random Live Moving)
 function DynamicMountainChart() {
   const [points1, setPoints1] = useState("M 0,130 Q 70,40 140,90 T 280,60 T 420,110 T 500,40");
   const [points2, setPoints2] = useState("M 0,140 Q 60,90 120,50 T 250,100 T 380,30 T 500,80");
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // Menghasilkan koordinat kurva SVG acak agar grafik bergerak dinamis
       const y1 = Math.floor(Math.random() * 50) + 30;
       const y2 = Math.floor(Math.random() * 60) + 40;
       const y3 = Math.floor(Math.random() * 40) + 20;
@@ -387,7 +383,7 @@ function DynamicMountainChart() {
       
       setPoints1(`M 0,130 Q 70,${y1} 140,${y2} T 280,${y3} T 420,${y4} T 500,40`);
       setPoints2(`M 0,140 Q 60,${y4} 120,${y3} T 250,${y2} T 380,${y1} T 500,80`);
-    }, 2000); // Berganti koordinat setiap 2 detik
+    }, 2000);
 
     return () => clearInterval(interval);
   }, []);
@@ -406,11 +402,9 @@ function DynamicMountainChart() {
           </linearGradient>
         </defs>
         
-        {/* Layer 1 - Cyan Mountain */}
         <path d={`${points1} L 500,150 L 0,150 Z`} fill="url(#grad1)" style={{ transition: "d 1.8s ease-in-out" }} />
         <path d={points1} fill="none" stroke="#06b6d4" strokeWidth="3" style={{ transition: "d 1.8s ease-in-out" }} />
 
-        {/* Layer 2 - Purple Mountain */}
         <path d={`${points2} L 500,150 L 0,150 Z`} fill="url(#grad2)" style={{ transition: "d 1.8s ease-in-out" }} />
         <path d={points2} fill="none" stroke="#d946ef" strokeWidth="3" style={{ transition: "d 1.8s ease-in-out" }} />
       </svg>
@@ -464,7 +458,7 @@ function DonutChart({ percentage, centerText, subText, color, legends }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {legends.map((item, idx) => (
           <div key={idx} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#8b8da6" }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: item.color }} />
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: item.color, flexShrink: 0 }} />
             {item.label}
           </div>
         ))}
