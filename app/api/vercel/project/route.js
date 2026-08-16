@@ -9,8 +9,8 @@
 // Auth header: Authorization: Bearer ${VERCEL_TOKEN}
 
 export async function GET() {
-  const token = process.env.VERCEL_TOKEN;
-  const projectId = process.env.VERCEL_PROJECT_ID;
+  const token = process.env.MONITOR_VERCEL_TOKEN;
+const projectId = process.env.MONITOR_VERCEL_PROJECT_ID;
 
   if (!token || !projectId) {
     return Response.json(
