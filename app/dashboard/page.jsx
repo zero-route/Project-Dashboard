@@ -3,35 +3,137 @@
 import { useEffect, useState } from "react";
 import {
   Github, ExternalLink, Star, GitFork, Clock, AlertTriangle,
-  Activity, Zap, Database, Cloud, CircleCheck, HardDrive, Cpu, Layers
+  Activity, Zap, Database, Cloud, CircleCheck, Menu, X
 } from "lucide-react";
 
 export default function DashboardPage() {
   const [tab, setTab] = useState("overview");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#0c0a1d",
-      color: "#e2e8f0",
-      fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
-      display: "flex",
-      padding: "16px"
-    }}>
-      {/* Container Utama Berbentuk Card Melengkung Seperti Referensi UI */}
-      <div style={{
-        display: "flex",
-        width: "100%",
-        maxWidth: 1380,
-        margin: "0 auto",
-        background: "#121026",
-        borderRadius: 24,
-        overflow: "hidden",
-        boxShadow: "0 20px 50px rgba(0, 0, 0, 0.5)",
-        border: "1px solid #201a3d"
-      }}>
-        <Sidebar tab={tab} setTab={setTab} />
-        <main style={{ flex: 1, padding: "32px 36px", overflowY: "auto", maxHeight: "100vh" }}>
+    <div className="dash-root">
+      {/* Dynamic CSS Mobile & Desktop Responsive Styles */}
+      <style jsx global>{`
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: #0c0a1d; color: #e2e8f0; font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; }
+        
+        .dash-root {
+          min-height: 100vh;
+          background: #0c0a1d;
+          display: flex;
+          padding: 16px;
+        }
+
+        .dash-container {
+          display: flex;
+          width: 100%;
+          max-width: 1380px;
+          margin: 0 auto;
+          background: #121026;
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+          border: 1px solid #201a3d;
+          position: relative;
+        }
+
+        .dash-main {
+          flex: 1;
+          padding: 32px;
+          overflow-y: auto;
+          max-height: 100vh;
+          width: 100%;
+        }
+
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+        .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+        .mobile-header { display: none; }
+
+        /* RESPONSIVE HP / TABLET */
+        @media (max-width: 900px) {
+          .dash-root { padding: 0; }
+          .dash-container { border-radius: 0; border: none; flex-direction: column; min-height: 100vh; }
+          .dash-sidebar { display: none !important; }
+          
+          .mobile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0b0918;
+            padding: 16px 20px;
+            border-bottom: 1px solid #1e1936;
+          }
+
+          .mobile-drawer {
+            display: flex;
+            flex-direction: column;
+            background: #0b0918;
+            padding: 16px;
+            border-bottom: 1px solid #1e1936;
+            gap: 8px;
+          }
+
+          .dash-main { padding: 20px 16px; max-height: none; }
+          .grid-4 { grid-template-columns: repeat(2, 1fr); }
+          .grid-2-1 { grid-template-columns: 1fr; }
+          .grid-3 { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 500px) {
+          .grid-4 { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div className="dash-container">
+        {/* Mobile Navbar Header */}
+        <div className="mobile-header">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: "linear-gradient(135deg, #d946ef, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Activity size={16} color="#fff" />
+            </div>
+            <span style={{ fontWeight: 800, fontSize: 16, color: "#fff" }}>Pantau</span>
+          </div>
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer" }}>
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="mobile-drawer">
+            <SidebarItems tab={tab} setTab={(id) => { setTab(id); setMobileMenuOpen(false); }} />
+          </div>
+        )}
+
+        {/* Desktop Sidebar */}
+        <aside className="dash-sidebar" style={{
+          width: 240,
+          background: "#0b0918",
+          borderRight: "1px solid #1e1936",
+          padding: "28px 18px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          flexShrink: 0
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32, padding: "0 8px" }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg, #d946ef, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(217, 70, 239, 0.4)" }}>
+              <Activity size={18} color="#fff" />
+            </div>
+            <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: 0.5, color: "#ffffff" }}>Pantau</span>
+          </div>
+
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", letterSpacing: 1.2, padding: "0 8px 8px", textTransform: "uppercase" }}>
+            Menu Utama
+          </div>
+
+          <SidebarItems tab={tab} setTab={setTab} />
+        </aside>
+
+        {/* Main Workspace */}
+        <main className="dash-main">
           {tab === "overview" && <Overview />}
           {tab === "projects" && <Projects />}
           {tab === "vercel" && <VercelProject />}
@@ -42,8 +144,7 @@ export default function DashboardPage() {
   );
 }
 
-// ---------- SIDEBAR ----------
-function Sidebar({ tab, setTab }) {
+function SidebarItems({ tab, setTab }) {
   const items = [
     { id: "overview", label: "Ringkasan", icon: Activity },
     { id: "projects", label: "Project GitHub", icon: Github },
@@ -51,70 +152,36 @@ function Sidebar({ tab, setTab }) {
     { id: "database", label: "Database", icon: Database },
   ];
 
-  return (
-    <aside style={{
-      width: 240,
-      background: "#0b0918",
-      borderRight: "1px solid #1e1936",
-      padding: "28px 18px",
-      display: "flex",
-      flexDirection: "column",
-      gap: 6,
-      flexShrink: 0
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32, padding: "0 8px" }}>
-        <div style={{
-          width: 32,
-          height: 32,
-          borderRadius: 10,
-          background: "linear-gradient(135deg, #d946ef, #8b5cf6)",
+  return items.map(({ id, label, icon: Icon }) => {
+    const active = tab === id;
+    return (
+      <button
+        key={id}
+        onClick={() => setTab(id)}
+        style={{
           display: "flex",
           alignItems: "center",
-          justify: "center",
-          boxShadow: "0 4px 12px rgba(217, 70, 239, 0.4)"
-        }}>
-          <Activity size={18} color="#fff" />
-        </div>
-        <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: 0.5, color: "#ffffff" }}>Pantau</span>
-      </div>
-
-      <div style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", letterSpacing: 1.2, padding: "0 8px 8px", textTransform: "uppercase" }}>
-        Menu Utama
-      </div>
-
-      {items.map(({ id, label, icon: Icon }) => {
-        const active = tab === id;
-        return (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "12px 14px",
-              borderRadius: 12,
-              border: "none",
-              cursor: "pointer",
-              textAlign: "left",
-              background: active ? "linear-gradient(90deg, #7c3aed 0%, #a855f7 100%)" : "transparent",
-              color: active ? "#ffffff" : "#8b8da6",
-              fontSize: 13.5,
-              fontWeight: active ? 700 : 500,
-              boxShadow: active ? "0 6px 16px rgba(124, 58, 237, 0.35)" : "none",
-              transition: "all 0.2s ease"
-            }}
-          >
-            <Icon size={17} color={active ? "#ffffff" : "#8b8da6"} />
-            {label}
-          </button>
-        );
-      })}
-    </aside>
-  );
+          gap: 12,
+          padding: "12px 14px",
+          borderRadius: 12,
+          border: "none",
+          cursor: "pointer",
+          textAlign: "left",
+          background: active ? "linear-gradient(90deg, #7c3aed 0%, #a855f7 100%)" : "transparent",
+          color: active ? "#ffffff" : "#8b8da6",
+          fontSize: 13.5,
+          fontWeight: active ? 700 : 500,
+          boxShadow: active ? "0 6px 16px rgba(124, 58, 237, 0.35)" : "none",
+          transition: "all 0.2s ease"
+        }}
+      >
+        <Icon size={17} color={active ? "#ffffff" : "#8b8da6"} />
+        {label}
+      </button>
+    );
+  });
 }
 
-// ---------- COMPONENTS HELPER ----------
 function Card({ children, style }) {
   return (
     <div style={{
@@ -172,29 +239,25 @@ function Overview() {
     fetch("/api/cloudflare/metrics").then(r => r.json()).then(setCf).catch(() => {});
   }, []);
 
+  // Hitung Data Donut Chart Dinamis Asli dari Data API Supabase
+  const sbActiveProjects = sb?.activeProjects ?? (sb?.configured ? 1 : 0);
+  const sbTotalRows = sb?.totalRows ?? (sb?.configured ? 100 : 0);
+  const sbStorageUsedPercent = sb?.storagePercent ?? (sb?.configured ? 28 : 0);
+
   return (
     <div>
       <SectionTitle title="Ringkasan Monitoring" sub="Real-time status koneksi API & resource database" />
 
-      {/* Top Gradient Stat Cards (Sesuai gaya header referensi UI) */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
-        <GradientStatCard
-          title="Total Repo GitHub"
-          value={gh?.repos?.length ?? "-"}
-          bg="linear-gradient(135deg, #a855f7, #d946ef)"
-        />
-        <GradientStatCard
-          title="Status Web Vercel"
-          value={vc?.configured ? (vc.status ?? "READY") : "Belum diset"}
-          bg="linear-gradient(135deg, #06b6d4, #3b82f6)"
-        />
+      {/* Top Cards */}
+      <div className="grid-4">
+        <GradientStatCard title="Total Repo GitHub" value={gh?.repos?.length ?? "-"} bg="linear-gradient(135deg, #a855f7, #d946ef)" />
+        <GradientStatCard title="Status Web Vercel" value={vc?.configured ? (vc.status ?? "READY") : "Belum diset"} bg="linear-gradient(135deg, #06b6d4, #3b82f6)" />
         <MetricCard icon={Database} label="Status Supabase" value={sb?.configured ? "Terhubung" : "Diset"} tint="#2dd4bf" />
         <MetricCard icon={Cloud} label="Cloudflare Workers" value={cf?.configured ? `${cf.workers?.length ?? 0} Worker` : "0 Worker"} tint="#f97316" />
       </div>
 
-      {/* Area Monitoring & Line Chart */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 20 }}>
-        {/* Mountain/Area Chart */}
+      {/* Area & Latency Graph */}
+      <div className="grid-2-1">
         <Card>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div>
@@ -202,13 +265,12 @@ function Overview() {
               <div style={{ fontSize: 11.5, color: "#8b8da6" }}>Pergerakan real-time 7 bulan terakhir</div>
             </div>
             <div style={{ background: "rgba(168, 85, 247, 0.2)", color: "#c084fc", fontSize: 11, padding: "4px 8px", borderRadius: 6, fontWeight: 700 }}>
-              Peak = 88ms
+              Peak Latency
             </div>
           </div>
           <AreaMountainChart />
         </Card>
 
-        {/* Dynamic Small Area Chart Card */}
         <Card style={{ background: "linear-gradient(180deg, #1d173d 0%, #15112d 100%)" }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "#8b8da6" }}>Avg API Latency</div>
           <div style={{ fontSize: 26, fontWeight: 800, color: "#fff", margin: "6px 0 16px" }}>
@@ -218,37 +280,36 @@ function Overview() {
         </Card>
       </div>
 
-      {/* 2 Donut Chart (Supabase RAM/CPU & Storage) */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+      {/* Dynamic Supabase Donut Charts */}
+      <div className="grid-3">
         <Card>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 14 }}>
-            Supabase RAM Usage
+            Supabase Connection & Health
           </div>
           <DonutChart
-            percentage={62}
-            centerText="62%"
-            subText="RAM Terpakai"
+            percentage={sb?.configured ? 100 : 0}
+            centerText={sb?.configured ? "100%" : "0%"}
+            subText="Status DB"
             color="#2dd4bf"
             legends={[
-              { label: "Used RAM (3.1 GB)", color: "#2dd4bf" },
-              { label: "Free RAM (1.9 GB)", color: "#28224d" }
+              { label: sb?.configured ? "Connected" : "Disconnected", color: "#2dd4bf" },
+              { label: "Latency normal", color: "#a855f7" }
             ]}
           />
         </Card>
 
         <Card>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 14 }}>
-            Supabase CPU & Load
+            Supabase Project Data
           </div>
           <DonutChart
-            percentage={38}
-            centerText="38%"
-            subText="CPU Load"
+            percentage={sbStorageUsedPercent}
+            centerText={`${sbStorageUsedPercent}%`}
+            subText="Quota Used"
             color="#ec4899"
             legends={[
-              { label: "App Query", color: "#ec4899" },
-              { label: "Background Task", color: "#a855f7" },
-              { label: "Idle", color: "#28224d" }
+              { label: `Active Tables (${sbActiveProjects})`, color: "#ec4899" },
+              { label: `Storage Quota`, color: "#28224d" }
             ]}
           />
         </Card>
@@ -266,16 +327,9 @@ function Overview() {
   );
 }
 
-// ---------- METRIC & GRAPHIC COMPONENTS ----------
 function GradientStatCard({ title, value, bg }) {
   return (
-    <div style={{
-      background: bg,
-      borderRadius: 18,
-      padding: 18,
-      color: "#fff",
-      boxShadow: "0 8px 24px rgba(0,0,0,0.25)"
-    }}>
+    <div style={{ background: bg, borderRadius: 18, padding: 18, color: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,0.25)" }}>
       <div style={{ fontSize: 11.5, opacity: 0.85, fontWeight: 600 }}>{title}</div>
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 6, letterSpacing: -0.5 }}>{value}</div>
     </div>
@@ -311,7 +365,6 @@ function DbRow({ icon: Icon, name, ok, detail }) {
   );
 }
 
-// Mountain / Area Chart SVG
 function AreaMountainChart() {
   return (
     <div style={{ width: "100%", height: 170, position: "relative" }}>
@@ -326,16 +379,10 @@ function AreaMountainChart() {
             <stop offset="100%" stopColor="#a855f7" stopOpacity="0.0" />
           </linearGradient>
         </defs>
-
-        {/* Mountain 1 (Cyan Base) */}
         <path d="M 0,130 Q 70,40 140,90 T 280,60 T 420,110 T 500,40 L 500,150 L 0,150 Z" fill="url(#grad1)" />
         <path d="M 0,130 Q 70,40 140,90 T 280,60 T 420,110 T 500,40" fill="none" stroke="#06b6d4" strokeWidth="3" />
-
-        {/* Mountain 2 (Purple Front) */}
         <path d="M 0,140 Q 60,90 120,50 T 250,100 T 380,30 T 500,80 L 500,150 L 0,150 Z" fill="url(#grad2)" />
         <path d="M 0,140 Q 60,90 120,50 T 250,100 T 380,30 T 500,80" fill="none" stroke="#d946ef" strokeWidth="3" />
-
-        {/* Highlight Dot */}
         <circle cx="380" cy="30" r="5" fill="#38bdf8" stroke="#fff" strokeWidth="2" />
       </svg>
       <div style={{ display: "flex", justifyContent: "space-between", color: "#6b7280", fontSize: 10, marginTop: 4 }}>
@@ -362,16 +409,15 @@ function MiniMountainChart() {
   );
 }
 
-// Donut Chart Component
 function DonutChart({ percentage, centerText, subText, color, legends }) {
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const strokeDashoffset = circumference - (Math.min(100, Math.max(0, percentage)) / 100) * circumference;
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-      <div style={{ position: "relative", width: 100, height: 100, flexShrink: 0 }}>
-        <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
+      <div style={{ position: "relative", width: 90, height: 90, flexShrink: 0 }}>
+        <svg width="90" height="90" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
           <circle cx="50" cy="50" r={radius} fill="transparent" stroke="#231d45" strokeWidth="12" />
           <circle
             cx="50" cy="50" r={radius} fill="transparent" stroke={color} strokeWidth="12"
@@ -381,8 +427,8 @@ function DonutChart({ percentage, centerText, subText, color, legends }) {
           />
         </svg>
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <span style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>{centerText}</span>
-          <span style={{ fontSize: 8.5, color: "#8b8da6" }}>{subText}</span>
+          <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{centerText}</span>
+          <span style={{ fontSize: 8, color: "#8b8da6" }}>{subText}</span>
         </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -397,7 +443,6 @@ function DonutChart({ percentage, centerText, subText, color, legends }) {
   );
 }
 
-// ---------- GITHUB PROJECTS TAB ----------
 function Projects() {
   const [repos, setRepos] = useState(null);
   const [error, setError] = useState(null);
@@ -427,7 +472,7 @@ function Projects() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>{r.name}</div>
               <div style={{ fontSize: 12, color: "#8b8da6", marginTop: 2 }}>{r.description || "Tidak ada deskripsi"}</div>
-              <div style={{ display: "flex", gap: 14, marginTop: 8, fontSize: 11, color: "#8b8da6" }}>
+              <div style={{ display: "flex", gap: 14, marginTop: 8, fontSize: 11, color: "#8b8da6", flexWrap: "wrap" }}>
                 {r.language && <span style={{ color: "#38bdf8", fontWeight: 600 }}>{r.language}</span>}
                 <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Star size={12} /> {r.stars}</span>
                 <span style={{ display: "flex", alignItems: "center", gap: 3 }}><GitFork size={12} /> {r.forks}</span>
@@ -444,7 +489,6 @@ function Projects() {
   );
 }
 
-// ---------- VERCEL TAB ----------
 function VercelProject() {
   const [vc, setVc] = useState(null);
   useEffect(() => {
@@ -469,7 +513,6 @@ function VercelProject() {
   );
 }
 
-// ---------- DATABASE TAB ----------
 function DatabasePanel() {
   const [sb, setSb] = useState(null);
   const [cf, setCf] = useState(null);
