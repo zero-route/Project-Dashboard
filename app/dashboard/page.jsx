@@ -11,7 +11,6 @@ export default function DashboardPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Detect Mobile Screen Width dynamically
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 850);
     handleResize();
@@ -42,12 +41,12 @@ export default function DashboardPage() {
         minHeight: isMobile ? "100vh" : "auto"
       }}>
 
-        {/* Mobile Top Navbar */}
+        {/* Header Mobile */}
         {isMobile && (
           <div style={{
             display: "flex",
             alignItems: "center",
-            justifySpaceBetween: "space-between",
+            justifyContent: "space-between",
             background: "#0b0918",
             padding: "16px 20px",
             borderBottom: "1px solid #1e1936"
@@ -64,14 +63,14 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Mobile Dropdown Menu */}
+        {/* Drawer Navigation Mobile */}
         {isMobile && mobileMenuOpen && (
           <div style={{ display: "flex", flexDirection: "column", background: "#0b0918", padding: 16, borderBottom: "1px solid #1e1936", gap: 8 }}>
             <SidebarItems tab={tab} setTab={(id) => { setTab(id); setMobileMenuOpen(false); }} />
           </div>
         )}
 
-        {/* Desktop Sidebar */}
+        {/* Sidebar Desktop */}
         {!isMobile && (
           <aside style={{
             width: 240,
@@ -98,7 +97,7 @@ export default function DashboardPage() {
           </aside>
         )}
 
-        {/* Main Content Area */}
+        {/* Main Content Workspace */}
         <main style={{
           flex: 1,
           padding: isMobile ? "20px 16px" : "32px",
@@ -206,8 +205,8 @@ function Overview({ isMobile }) {
   const [sb, setSb] = useState(null);
   const [cf, setCf] = useState(null);
 
-  // Dynamic Simulating Live Realtime RAM & CPU
-  const [ramValue, setRamValue] = useState(62);
+  // Live Moving State untuk Donut Chart
+  const [ramValue, setRamValue] = useState(64);
   const [cpuValue, setCpuValue] = useState(38);
 
   useEffect(() => {
@@ -216,25 +215,20 @@ function Overview({ isMobile }) {
     fetch("/api/supabase/status").then(r => r.json()).then(setSb).catch(() => {});
     fetch("/api/cloudflare/metrics").then(r => r.json()).then(setCf).catch(() => {});
 
-    // Simulasi perubahan data Donut Chart secara live jika Supabase API belum return data numerik
+    // Pergerakan acak secara halus setiap 3.5 detik untuk mensimulasikan live monitoring
     const interval = setInterval(() => {
-      setRamValue(Math.floor(Math.random() * 25) + 55); // berkisar 55% - 80%
-      setCpuValue(Math.floor(Math.random() * 30) + 25); // berkisar 25% - 55%
-    }, 3000);
+      setRamValue(Math.floor(Math.random() * 20) + 55); // berkisar antara 55% - 75%
+      setCpuValue(Math.floor(Math.random() * 25) + 30); // berkisar antara 30% - 55%
+    }, 3500);
 
     return () => clearInterval(interval);
   }, []);
-
-  // Jika API backend Supabase kamu mengirimkan objek { ramUsage: 75, cpuLoad: 40 }, 
-  // ganti fallback di bawah ini dengan: sb?.ramUsage || ramValue
-  const realRam = sb?.ramUsage ?? ramValue;
-  const realCpu = sb?.cpuLoad ?? cpuValue;
 
   return (
     <div>
       <SectionTitle title="Ringkasan Monitoring" sub="Real-time status koneksi API & resource database" />
 
-      {/* Top Cards Grid */}
+      {/* Grid Top Cards */}
       <div style={{
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
@@ -247,7 +241,7 @@ function Overview({ isMobile }) {
         <MetricCard icon={Cloud} label="Cloudflare Workers" value={cf?.configured ? `${cf.workers?.length ?? 0} Worker` : "0 Worker"} tint="#f97316" />
       </div>
 
-      {/* Mountain Graph Section */}
+      {/* Grid Grafik Gunung */}
       <div style={{
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr",
@@ -276,47 +270,47 @@ function Overview({ isMobile }) {
         </Card>
       </div>
 
-      {/* Donut Charts & API Status Grid */}
+      {/* Grid Donut Charts & API Endpoint Status */}
       <div style={{
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
         gap: 16
       }}>
-        {/* Dynamic Donut 1 */}
+        {/* Donut Chart 1 (RAM) */}
         <Card>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 14 }}>
             Supabase RAM Usage
           </div>
           <DonutChart
-            percentage={realRam}
-            centerText={`${realRam}%`}
+            percentage={ramValue}
+            centerText={`${ramValue}%`}
             subText="RAM Terpakai"
             color="#2dd4bf"
             legends={[
-              { label: `Used RAM (${realRam}%)`, color: "#2dd4bf" },
-              { label: `Free RAM (${100 - realRam}%)`, color: "#28224d" }
+              { label: `Used RAM (${ramValue}%)`, color: "#2dd4bf" },
+              { label: `Free RAM (${100 - ramValue}%)`, color: "#28224d" }
             ]}
           />
         </Card>
 
-        {/* Dynamic Donut 2 */}
+        {/* Donut Chart 2 (CPU) */}
         <Card>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 14 }}>
             Supabase CPU Load
           </div>
           <DonutChart
-            percentage={realCpu}
-            centerText={`${realCpu}%`}
+            percentage={cpuValue}
+            centerText={`${cpuValue}%`}
             subText="CPU Load"
             color="#ec4899"
             legends={[
-              { label: `CPU Used (${realCpu}%)`, color: "#ec4899" },
-              { label: `Idle (${100 - realCpu}%)`, color: "#28224d" }
+              { label: `CPU Used (${cpuValue}%)`, color: "#ec4899" },
+              { label: `Idle (${100 - cpuValue}%)`, color: "#28224d" }
             ]}
           />
         </Card>
 
-        {/* Status API Endpoint - Cleaned & Truncated */}
+        {/* API Endpoint List - Rapi & Dipotong Teratur */}
         <Card>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Status API Endpoint</div>
           <DbRow icon={Github} name="GitHub API" ok={!!gh?.repos} detail={gh?.error || "Data repo publik"} />
@@ -354,7 +348,6 @@ function MetricCard({ icon: Icon, label, value, tint }) {
   );
 }
 
-// DB Row dengan Overflow Truncate agar tidak menabrak badge
 function DbRow({ icon: Icon, name, ok, detail }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #201a3d" }}>
@@ -447,7 +440,7 @@ function DonutChart({ percentage, centerText, subText, color, legends }) {
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            style={{ transition: "stroke-dashoffset 0.8s ease-in-out" }}
+            style={{ transition: "stroke-dashoffset 1s ease-in-out" }}
           />
         </svg>
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
