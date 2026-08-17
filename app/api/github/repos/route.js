@@ -38,18 +38,23 @@ export async function GET() {
     const data = await res.json();
 
     // Ambil field yang relevan saja untuk dashboard
-    const repos = data.map((r) => ({
-      name: r.name,
-      description: r.description,
-      url: r.html_url,
-      stars: r.stargazers_count,
-      forks: r.forks_count,
-      language: r.language,
-      updatedAt: r.updated_at,
-      openIssues: r.open_issues_count,
-      archived: r.archived,
-      defaultBranch: r.default_branch,
-    }));
+    const repos = data.map((r) => {
+      const pagesUrl = r.has_pages ? `https://${username}.github.io/${r.name}/` : null;
+      const liveUrl = r.homepage?.trim() || pagesUrl || null;
+      return {
+        name: r.name,
+        description: r.description,
+        url: r.html_url,
+        liveUrl,
+        stars: r.stargazers_count,
+        forks: r.forks_count,
+        language: r.language,
+        updatedAt: r.updated_at,
+        openIssues: r.open_issues_count,
+        archived: r.archived,
+        defaultBranch: r.default_branch,
+      };
+    });
 
     return Response.json({ repos, username });
   } catch (err) {
