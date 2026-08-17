@@ -51,7 +51,7 @@ export async function GET() {
       defaultBranch: r.default_branch,
     }));
 
-    return Response.json({ repos });
+    return Response.json({ repos, username });
   } catch (err) {
     return Response.json(
       { error: "Gagal mengambil data dari GitHub", detail: String(err) },
