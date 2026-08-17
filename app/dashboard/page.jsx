@@ -155,24 +155,24 @@ function useClock() {
   return now;
 }
 
-// ---------- Grafik bukit: data asli request/jam dari Cloudflare Worker ----------
-// Fallback ke random walk kalau data belum tersedia (misal request masih sedikit)
+// ---------- Grafik bukit: data asli aktivitas GitHub harian (14 hari) ----------
+// Fallback ke random walk kalau fetch gagal total (offline dsb)
 function useActivityWave() {
   const [data, setData] = useState(
-    Array.from({ length: 20 }, (_, i) => ({ x: i, y: Math.round(20 + Math.random() * 60) }))
+    Array.from({ length: 14 }, (_, i) => ({ x: i, y: Math.round(20 + Math.random() * 60) }))
   );
   const [source, setSource] = useState("random");
 
   useEffect(() => {
-    fetch("/api/cloudflare/timeseries")
+    fetch("/api/github/activity")
       .then((r) => r.json())
       .then((json) => {
         const points = json?.points || [];
-        if (points.length >= 4) {
+        if (points.length > 0) {
           const max = Math.max(...points.map((p) => p.y), 1);
           const scaled = points.map((p) => ({ x: p.x, y: Math.round((p.y / max) * 100) }));
           setData(scaled);
-          setSource("cloudflare");
+          setSource("github");
         }
       })
       .catch(() => {});
@@ -280,7 +280,9 @@ function Overview() {
 
       <Card style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4, flexWrap: "wrap", gap: 6 }}>
-          <div style={{ fontSize: 13, fontWeight: 600 }}>Live Activity</div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>
+            {waveSource === "github" ? "Aktivitas GitHub — 14 Hari Terakhir" : "Aktivitas (gagal memuat, ilustrasi sementara)"}
+          </div>
           <div style={{ fontSize: 11, color: "#7d8199" }}>Skala 0–100</div>
         </div>
         <ResponsiveContainer width="100%" height={160}>
