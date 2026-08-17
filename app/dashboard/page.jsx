@@ -325,6 +325,22 @@ function DbRow({ icon: Icon, name, ok, detail }) {
 }
 
 // ---------- GITHUB PROJECTS ----------
+const LANG_COLORS = {
+  JavaScript: "#f0db4f",
+  TypeScript: "#5b8def",
+  HTML: "#ff8a5b",
+  CSS: "#5be0c4",
+  Python: "#facc15",
+  Go: "#4dd6c4",
+  C: "#c084fc",
+  "C++": "#c084fc",
+  Java: "#f4527a",
+};
+function langColor(lang) {
+  return LANG_COLORS[lang] || "#8b8fa8";
+}
+
+// ---------- GITHUB PROJECTS ----------
 function Projects() {
   const [repos, setRepos] = useState(null);
   const [error, setError] = useState(null);
@@ -345,27 +361,66 @@ function Projects() {
         </div>
       )}
       {!repos && !error && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data repo...</p>}
-      <div style={{ display: "grid", gap: 10 }}>
-        {repos?.map((r) => (
-          <Card key={r.name} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-            <div style={{ width: 36, height: 36, borderRadius: 9, background: "#1a1e33", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Github size={16} color="#8b8fa8" />
-            </div>
-            <div style={{ flex: 1, minWidth: 160 }}>
-              <div style={{ fontWeight: 600, fontSize: 13.5 }}>{r.name}</div>
-              <div style={{ fontSize: 11.5, color: "#7d8199", marginTop: 2 }}>{r.description || "Tidak ada deskripsi"}</div>
-              <div style={{ display: "flex", gap: 12, marginTop: 6, fontSize: 11, color: "#7d8199", flexWrap: "wrap" }}>
-                {r.language && <span>{r.language}</span>}
-                <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Star size={11} /> {r.stars}</span>
-                <span style={{ display: "flex", alignItems: "center", gap: 3 }}><GitFork size={11} /> {r.forks}</span>
-                <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Clock size={11} /> {new Date(r.updatedAt).toLocaleDateString("id-ID")}</span>
+      <div style={{ display: "grid", gap: 12 }}>
+        {repos?.map((r) => {
+          const color = langColor(r.language);
+          const isLive = !!r.liveUrl;
+          return (
+            <div key={r.name} style={{
+              background: "#12162a", border: "1px solid #1e2338", borderRadius: 16,
+              padding: "16px 18px 16px 16px", display: "flex", gap: 14, flexWrap: "wrap",
+              borderLeft: `3px solid ${color}`, position: "relative", overflow: "hidden",
+            }}>
+              <div style={{
+                position: "absolute", top: 0, right: 0, width: 140, height: 140,
+                background: `radial-gradient(circle at top right, ${color}22, transparent 70%)`,
+                pointerEvents: "none",
+              }} />
+              <div style={{
+                width: 38, height: 38, borderRadius: 10, background: `${color}22`,
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, zIndex: 1,
+              }}>
+                <Github size={17} color={color} />
               </div>
+              <div style={{ flex: 1, minWidth: 160, zIndex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa" }}>{r.name}</span>
+                  {isLive && (
+                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.4, background: "#4dd6c422", color: "#4dd6c4", padding: "2px 8px", borderRadius: 20 }}>
+                      LIVE
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 11.5, color: "#9aa0bd", marginTop: 3 }}>{r.description || "Tidak ada deskripsi"}</div>
+                <div style={{ display: "flex", gap: 10, marginTop: 9, fontSize: 11, color: "#7d8199", flexWrap: "wrap" }}>
+                  {r.language && (
+                    <span style={{ display: "flex", alignItems: "center", gap: 4, background: "#1a1e33", padding: "3px 8px", borderRadius: 20 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: 4, background: color }} /> {r.language}
+                    </span>
+                  )}
+                  <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Star size={11} /> {r.stars}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 3 }}><GitFork size={11} /> {r.forks}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Clock size={11} /> {new Date(r.updatedAt).toLocaleDateString("id-ID")}</span>
+                </div>
+              </div>
+              <a
+                href={isLive ? r.liveUrl : r.url}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "flex", alignItems: "center", gap: 5, alignSelf: "center", zIndex: 1,
+                  background: isLive ? `${color}` : "#1a1e33",
+                  border: isLive ? "none" : "1px solid #2a2f4a",
+                  color: isLive ? "#0a0c14" : "#e7e9f3",
+                  fontWeight: isLive ? 700 : 500,
+                  padding: "8px 12px", borderRadius: 9, fontSize: 12, textDecoration: "none", flexShrink: 0,
+                }}
+              >
+                {isLive ? "Buka Web" : "Buka Repo"} <ExternalLink size={12} />
+              </a>
             </div>
-            <a href={r.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 5, background: "#1a1e33", border: "1px solid #2a2f4a", color: "#e7e9f3", padding: "7px 10px", borderRadius: 8, fontSize: 12, textDecoration: "none", flexShrink: 0 }}>
-              Buka <ExternalLink size={12} />
-            </a>
-          </Card>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
