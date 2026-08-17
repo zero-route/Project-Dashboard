@@ -155,25 +155,30 @@ function useClock() {
   return now;
 }
 
-// ---------- Grafik bukit: random walk yang tetap "bergerak" ----------
-function useMovingWave(points = 20) {
-  const [data, setData] = useState(() =>
-    Array.from({ length: points }, (_, i) => ({ x: i, y: Math.round(20 + Math.random() * 60) }))
+// ---------- Grafik bukit: data asli request/jam dari Cloudflare Worker ----------
+// Fallback ke random walk kalau data belum tersedia (misal request masih sedikit)
+function useActivityWave() {
+  const [data, setData] = useState(
+    Array.from({ length: 20 }, (_, i) => ({ x: i, y: Math.round(20 + Math.random() * 60) }))
   );
+  const [source, setSource] = useState("random");
+
   useEffect(() => {
-    const t = setInterval(() => {
-      setData((prev) => {
-        const next = prev.slice(1);
-        const last = prev[prev.length - 1].y;
-        const delta = (Math.random() - 0.5) * 30;
-        const y = Math.max(3, Math.min(97, Math.round(last + delta)));
-        next.push({ x: prev[prev.length - 1].x + 1, y });
-        return next;
-      });
-    }, 2200);
-    return () => clearInterval(t);
+    fetch("/api/cloudflare/timeseries")
+      .then((r) => r.json())
+      .then((json) => {
+        const points = json?.points || [];
+        if (points.length >= 4) {
+          const max = Math.max(...points.map((p) => p.y), 1);
+          const scaled = points.map((p) => ({ x: p.x, y: Math.round((p.y / max) * 100) }));
+          setData(scaled);
+          setSource("cloudflare");
+        }
+      })
+      .catch(() => {});
   }, []);
-  return data;
+
+  return { data, source };
 }
 
 // ---------- Ukur latency asli tiap API (client-side) ----------
