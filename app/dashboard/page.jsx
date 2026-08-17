@@ -1,27 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Github, ExternalLink, Star, GitFork, Clock, AlertTriangle,
-  Activity, Zap, Database, Cloud, CircleCheck,
+  Activity, Zap, Database, Cloud, CircleCheck, Menu, Music2, Bot,
 } from "lucide-react";
 import {
   AreaChart, Area, PieChart, Pie, Cell,
-  ResponsiveContainer, Tooltip,
+  ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
 } from "recharts";
 
 const PIE_COLORS = ["#c084fc", "#5b8def", "#4dd6c4", "#ff8a5b", "#f472b6", "#facc15"];
 
-// data dekoratif buat grafik gelombang (bukan dari API, murni visual)
-const wave = [12, 19, 14, 26, 22, 30, 24, 34, 28, 38, 32, 41].map((v, i) => ({ x: i, y: v }));
-
 export default function DashboardPage() {
   const [tab, setTab] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
     <div className="layout">
-      <Sidebar tab={tab} setTab={setTab} />
+      <Sidebar open={sidebarOpen} tab={tab} setTab={setTab} />
       <main className="main">
+        <div className="topbar">
+          <button className="toggle-btn" onClick={() => setSidebarOpen(o => !o)}>
+            <Menu size={18} />
+          </button>
+        </div>
         {tab === "overview" && <Overview />}
         {tab === "projects" && <Projects />}
         {tab === "vercel" && <VercelProject />}
@@ -31,18 +34,18 @@ export default function DashboardPage() {
   );
 }
 
-function Sidebar({ tab, setTab }) {
+function Sidebar({ open, tab, setTab }) {
   const items = [
     { id: "overview", label: "Ringkasan", icon: Activity },
     { id: "projects", label: "Project GitHub", icon: Github },
-    { id: "vercel", label: "Web Vercel", icon: Zap },
+    { id: "vercel", label: "Project Vercel", icon: Zap },
     { id: "database", label: "Database", icon: Database },
   ];
   return (
-    <aside className="sidebar">
-      <div className="brand" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, padding: "0 8px" }}>
-        <div style={{ width: 26, height: 26, borderRadius: 7, background: "linear-gradient(135deg,#5b8def,#c084fc)" }} />
-        <span style={{ fontWeight: 700, fontSize: 14, color: "#e7e9f3" }}>Pantau</span>
+    <aside className={`sidebar ${open ? "" : "closed"}`}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, padding: "0 8px" }}>
+        <div style={{ width: 26, height: 26, borderRadius: 7, background: "linear-gradient(135deg,#5b8def,#c084fc)", flexShrink: 0 }} />
+        <span style={{ fontWeight: 700, fontSize: 14, color: "#e7e9f3" }}>Project Monitoring</span>
       </div>
       {items.map(({ id, label, icon: Icon }) => (
         <button key={id} onClick={() => setTab(id)}
@@ -80,16 +83,28 @@ function StatusBadge({ ok, textOk = "Terhubung", textFail = "Belum diset" }) {
   );
 }
 
-function GradientCard({ label, value, sub, from, to }) {
+function GradientCard({ label, value, sub, from, to, style }) {
   return (
     <div style={{
       background: `linear-gradient(135deg, ${from}, ${to})`,
       borderRadius: 18, padding: "20px 22px", color: "#fff",
-      minHeight: 110, display: "flex", flexDirection: "column", justifyContent: "center",
+      minHeight: 110, display: "flex", flexDirection: "column", justifyContent: "center", ...style,
     }}>
       <div style={{ fontSize: 13, opacity: 0.9, fontWeight: 500 }}>{label}</div>
       <div style={{ fontSize: 30, fontWeight: 800, marginTop: 6, lineHeight: 1 }}>{value}</div>
       {sub && <div style={{ fontSize: 11.5, opacity: 0.85, marginTop: 6 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function IconStatCard({ icon: Icon, label, tint, note }) {
+  return (
+    <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 16, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+      <div style={{ width: 32, height: 32, borderRadius: 9, background: `${tint}22`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icon size={16} color={tint} />
+      </div>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: "#e7e9f3" }}>{label}</div>
+      {note && <div style={{ fontSize: 10.5, color: "#7d8199" }}>{note}</div>}
     </div>
   );
 }
@@ -112,7 +127,7 @@ function DonutCard({ title, data, centerLabel, centerValue }) {
             </PieChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", pointerEvents: "none" }}>
-            <div style={{ fontSize: 18, fontWeight: 700 }}>{centerValue}</div>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>{centerValue}</div>
             <div style={{ fontSize: 10, color: "#7d8199" }}>{centerLabel}</div>
           </div>
         </div>
@@ -121,12 +136,65 @@ function DonutCard({ title, data, centerLabel, centerValue }) {
         {data.map((d, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#a7abc2" }}>
             <span style={{ width: 8, height: 8, borderRadius: 4, background: PIE_COLORS[i % PIE_COLORS.length] }} />
-            {d.name} ({d.value})
+            {d.name}
           </div>
         ))}
       </div>
     </Card>
   );
+}
+
+// ---------- Jam realtime ----------
+function useClock() {
+  const [now, setNow] = useState(null);
+  useEffect(() => {
+    setNow(new Date());
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return now;
+}
+
+// ---------- Grafik bukit: random walk yang tetap "bergerak" ----------
+function useMovingWave(points = 20) {
+  const [data, setData] = useState(() =>
+    Array.from({ length: points }, (_, i) => ({ x: i, y: Math.round(20 + Math.random() * 60) }))
+  );
+  useEffect(() => {
+    const t = setInterval(() => {
+      setData((prev) => {
+        const next = prev.slice(1);
+        const last = prev[prev.length - 1].y;
+        const delta = (Math.random() - 0.5) * 30;
+        const y = Math.max(3, Math.min(97, Math.round(last + delta)));
+        next.push({ x: prev[prev.length - 1].x + 1, y });
+        return next;
+      });
+    }, 2200);
+    return () => clearInterval(t);
+  }, []);
+  return data;
+}
+
+// ---------- Ukur latency asli tiap API (client-side) ----------
+function useApiLatency() {
+  const [latency, setLatency] = useState({});
+  useEffect(() => {
+    const targets = [
+      { key: "vercel", url: "/api/vercel/project" },
+      { key: "supabase", url: "/api/supabase/status" },
+      { key: "cloudflare", url: "/api/cloudflare/metrics" },
+    ];
+    targets.forEach(async ({ key, url }) => {
+      const t0 = performance.now();
+      try {
+        await fetch(url);
+      } catch (e) {}
+      const ms = Math.round(performance.now() - t0);
+      setLatency((prev) => ({ ...prev, [key]: ms }));
+    });
+  }, []);
+  return latency;
 }
 
 // ---------- OVERVIEW ----------
@@ -135,6 +203,9 @@ function Overview() {
   const [vc, setVc] = useState(null);
   const [sb, setSb] = useState(null);
   const [cf, setCf] = useState(null);
+  const now = useClock();
+  const wave = useMovingWave();
+  const latency = useApiLatency();
 
   useEffect(() => {
     fetch("/api/github/repos").then(r => r.json()).then(setGh).catch(() => {});
@@ -143,38 +214,71 @@ function Overview() {
     fetch("/api/cloudflare/metrics").then(r => r.json()).then(setCf).catch(() => {});
   }, []);
 
-  // Donut 1: distribusi request per Worker Cloudflare (data asli)
-  const workerData = (cf?.workers || [])
-    .filter(w => w.requests != null)
-    .map(w => ({ name: w.scriptName, value: w.requests }));
+  const timeStr = now
+    ? now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    : "--:--:--";
+  const dateStr = now ? now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" }) : "";
 
-  // Donut 2: bahasa pemrograman repo GitHub (data asli)
-  const langCount = {};
-  (gh?.repos || []).forEach(r => {
-    if (r.language) langCount[r.language] = (langCount[r.language] || 0) + 1;
-  });
-  const langData = Object.entries(langCount).map(([name, value]) => ({ name, value }));
+  const LATENCY_CAP = 800; // ms, skala buat donut
+  const latencyDonut = (label, ms) => {
+    if (ms == null) return { name: label, data: [] };
+    const pct = Math.min(100, Math.round((ms / LATENCY_CAP) * 100));
+    return {
+      name: label,
+      centerValue: `${ms} ms`,
+      data: [
+        { name: "Respons", value: pct },
+        { name: "Sisa skala", value: 100 - pct },
+      ],
+    };
+  };
 
-  // Donut 3: status koneksi 4 layanan (data asli)
-  const connected = [gh?.repos, vc?.configured, sb?.configured, cf?.configured].filter(Boolean).length;
-  const statusData = [
-    { name: "Terhubung", value: connected },
-    { name: "Belum diset", value: 4 - connected },
-  ];
+  const donutSupabase = latencyDonut("Latency Supabase", latency.supabase);
+  const donutVercel = latencyDonut("Latency Vercel", latency.vercel);
+  const donutCloudflare = latencyDonut("Latency Cloudflare", latency.cloudflare);
 
   return (
     <div>
       <SectionTitle title="Ringkasan Monitoring" sub="Status seluruh layanan yang dipantau" />
 
-      <div className="grid-2 hero-2col" style={{ marginBottom: 14 }}>
-        <GradientCard label="Total Repo GitHub" value={gh?.repos?.length ?? "-"} sub="dari akun zero-route" from="#c084fc" to="#7c5cf0" />
-        <GradientCard label="Status Web Vercel" value={vc?.configured ? (vc.status ?? "Live") : "-"} sub="DeadmanSwitcha" from="#5b8def" to="#38c6d9" />
+      <div className="hero-grid">
+        <div className="hero-clock">
+          <GradientCard label="Waktu Sekarang" value={timeStr} sub={dateStr} from="#c084fc" to="#7c5cf0" style={{ height: "100%" }} />
+        </div>
+        <div className="hero-github">
+          <GradientCard label="Total Repo GitHub" value={gh?.repos?.length ?? "-"} sub={`akun ${gh?.username ?? ""}`} from="#5b8def" to="#38c6d9" style={{ height: "100%" }} />
+        </div>
+
+        <div className="hero-icons">
+          <IconStatCard icon={Music2} label="Music" tint="#f472b6" note="Segera: YouTube Music" />
+          <IconStatCard icon={Bot} label="Assistant" tint="#5b8def" note="Segera: Gemini AI" />
+        </div>
+
+        <div className="hero-calendar">
+          <div style={{
+            background: "linear-gradient(135deg, #16224a, #0e1633)",
+            borderRadius: 18, padding: "18px 20px", color: "#fff", minHeight: 130,
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Kalender Commit GitHub</div>
+            {gh?.username ? (
+              <img
+                src={`https://ghchart.rshah.org/8b5cf6/${gh.username}`}
+                alt={`Kalender commit ${gh.username}`}
+                style={{ width: "100%", height: "auto", borderRadius: 8, background: "#0a0c14" }}
+              />
+            ) : (
+              <div style={{ fontSize: 12, opacity: 0.7 }}>Memuat...</div>
+            )}
+          </div>
+        </div>
       </div>
 
       <Card style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Aktivitas 7 Hari Terakhir</div>
-        <div style={{ fontSize: 11, color: "#7d8199", marginBottom: 8 }}>Ilustrasi tren (belum tersambung ke data historis asli)</div>
-        <ResponsiveContainer width="100%" height={140}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4, flexWrap: "wrap", gap: 6 }}>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>Aktivitas (live, random)</div>
+          <div style={{ fontSize: 11, color: "#7d8199" }}>Skala 0–100</div>
+        </div>
+        <ResponsiveContainer width="100%" height={160}>
           <AreaChart data={wave}>
             <defs>
               <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
@@ -182,30 +286,18 @@ function Overview() {
                 <stop offset="100%" stopColor="#5b8def" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <Area type="monotone" dataKey="y" stroke="#5b8def" fill="url(#waveGrad)" strokeWidth={2} />
+            <CartesianGrid stroke="#1e2338" vertical={false} />
+            <XAxis dataKey="x" hide />
+            <YAxis orientation="right" domain={[0, 100]} stroke="#5b5f78" fontSize={11} tickLine={false} axisLine={false} />
+            <Area type="monotone" dataKey="y" stroke="#5b8def" fill="url(#waveGrad)" strokeWidth={2} isAnimationActive={true} />
           </AreaChart>
         </ResponsiveContainer>
       </Card>
 
       <div className="grid-3" style={{ marginBottom: 14 }}>
-        <DonutCard
-          title="Request per Worker (Cloudflare)"
-          data={workerData}
-          centerValue={workerData.reduce((s, d) => s + d.value, 0)}
-          centerLabel="requests"
-        />
-        <DonutCard
-          title="Bahasa Repo (GitHub)"
-          data={langData}
-          centerValue={gh?.repos?.length ?? 0}
-          centerLabel="repo"
-        />
-        <DonutCard
-          title="Status Koneksi API"
-          data={statusData}
-          centerValue={`${connected}/4`}
-          centerLabel="terhubung"
-        />
+        <DonutCard title={donutSupabase.name} data={donutSupabase.data} centerValue={donutSupabase.centerValue ?? "-"} centerLabel="dari Supabase" />
+        <DonutCard title={donutVercel.name} data={donutVercel.data} centerValue={donutVercel.centerValue ?? "-"} centerLabel="dari Vercel" />
+        <DonutCard title={donutCloudflare.name} data={donutCloudflare.data} centerValue={donutCloudflare.centerValue ?? "-"} centerLabel="dari Cloudflare" />
       </div>
 
       <Card>
