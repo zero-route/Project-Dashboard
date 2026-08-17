@@ -209,7 +209,7 @@ function Overview() {
   const [sb, setSb] = useState(null);
   const [cf, setCf] = useState(null);
   const now = useClock();
-  const wave = useMovingWave();
+  const { data: wave, source: waveSource } = useActivityWave();
   const latency = useApiLatency();
 
   useEffect(() => {
