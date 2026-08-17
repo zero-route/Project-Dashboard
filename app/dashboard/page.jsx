@@ -275,7 +275,7 @@ function Overview() {
 
       <Card style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4, flexWrap: "wrap", gap: 6 }}>
-          <div style={{ fontSize: 13, fontWeight: 600 }}>Aktivitas (live, random)</div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>Live Activity</div>
           <div style={{ fontSize: 11, color: "#7d8199" }}>Skala 0–100</div>
         </div>
         <ResponsiveContainer width="100%" height={160}>
