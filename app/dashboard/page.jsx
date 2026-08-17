@@ -8,6 +8,7 @@ import {
 import {
   AreaChart, Area, PieChart, Pie, Cell,
   ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
+  BarChart, Bar,
 } from "recharts";
 
 const PIE_COLORS = ["#c084fc", "#5b8def", "#4dd6c4", "#ff8a5b", "#f472b6", "#facc15"];
@@ -471,58 +472,116 @@ function DatabasePanel() {
     fetch("/api/cloudflare/metrics").then(r => r.json()).then(setCf).catch(() => {});
   }, []);
 
-  const workerData = (cf?.workers || [])
-    .filter(w => w.requests != null)
-    .map(w => ({ name: w.scriptName, value: w.requests }));
+  const workers = cf?.workers || [];
+  const totalRequests = workers.reduce((s, w) => s + (w.requests || 0), 0);
+  const totalErrors = workers.reduce((s, w) => s + (w.errors || 0), 0);
+  const activeWorkers = workers.filter((w) => (w.requests || 0) > 0).length;
+
+  const barData = workers.map((w) => ({ name: w.scriptName, requests: w.requests || 0 }));
 
   return (
     <div>
       <SectionTitle title="Database" sub="Supabase & Cloudflare Workers" />
 
+      {/* Stat cards ringkas */}
       <div className="grid-3" style={{ marginBottom: 14 }}>
-        <DonutCard
-          title="Request per Worker"
-          data={workerData}
-          centerValue={workerData.reduce((s, d) => s + d.value, 0)}
-          centerLabel="requests"
-        />
+        <MiniStat icon={Database} tint="#4dd6c4" label="Baris di tabel absen" value={sb?.configured && sb.totalRows != null ? sb.totalRows : "-"} />
+        <MiniStat icon={Cloud} tint="#ff8a5b" label="Total Request (3 Worker)" value={cf?.configured ? totalRequests : "-"} />
+        <MiniStat icon={AlertTriangle} tint={totalErrors > 0 ? "#f4527a" : "#4dd6c4"} label="Total Error" value={cf?.configured ? totalErrors : "-"} />
       </div>
 
+      {/* Supabase: data asli */}
       <Card style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <Database size={16} color="#4dd6c4" /> <span style={{ fontWeight: 600, fontSize: 13.5 }}>Supabase</span>
+          <Database size={16} color="#4dd6c4" /> <span style={{ fontWeight: 600, fontSize: 13.5 }}>Supabase — tabel {sb?.tableName || "absen"}</span>
         </div>
         {!sb && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat...</p>}
         {sb && !sb.configured && <div style={{ fontSize: 13, color: "#7d8199" }}>{sb.message}</div>}
-        {sb?.configured && <div style={{ fontSize: 13, color: "#7d8199" }}>{sb.note}</div>}
+        {sb?.configured && sb.error && (
+          <div style={{ fontSize: 12.5, color: "#ff8a9b" }}>{sb.error} — {sb.detail}</div>
+        )}
+        {sb?.configured && !sb.error && (
+          <>
+            <div style={{ fontSize: 26, fontWeight: 700, marginBottom: 2 }}>{sb.totalRows}</div>
+            <div style={{ fontSize: 11.5, color: "#7d8199", marginBottom: 14 }}>total baris tercatat</div>
+
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#9aa0bd", marginBottom: 8 }}>5 Data Terbaru</div>
+            {sb.recentRows?.length === 0 && <div style={{ fontSize: 12, color: "#7d8199" }}>Belum ada data.</div>}
+            <div style={{ display: "grid", gap: 8 }}>
+              {sb.recentRows?.map((row, i) => (
+                <div key={i} style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 10, padding: "8px 10px" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px" }}>
+                    {sb.columns?.slice(0, 4).map((col) => (
+                      <span key={col} style={{ fontSize: 11, color: "#7d8199" }}>
+                        <span style={{ color: "#9aa0bd" }}>{col}:</span> {String(row[col] ?? "-")}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </Card>
 
-      <Card>
+      {/* Cloudflare: bar chart + status per worker */}
+      <Card style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <Cloud size={16} color="#ff8a5b" /> <span style={{ fontWeight: 600, fontSize: 13.5 }}>Cloudflare Workers</span>
+          {cf?.configured && (
+            <span style={{ fontSize: 11, color: "#7d8199", marginLeft: "auto" }}>{activeWorkers}/{workers.length} aktif</span>
+          )}
         </div>
         {!cf && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat...</p>}
         {cf && !cf.configured && <div style={{ fontSize: 13, color: "#7d8199" }}>{cf.message}</div>}
-        {cf?.configured && cf.workers?.map((w) => (
-          <div key={w.key} style={{ padding: "10px 0", borderBottom: "1px solid #1e2338" }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>{w.scriptName}</div>
-            <div style={{ display: "flex", gap: 14, fontSize: 11.5, color: "#7d8199", flexWrap: "wrap" }}>
-              <span>Requests: {w.requests ?? "-"}</span>
-              <span>Errors: {w.errors ?? "-"}</span>
-              <span>CPU p50: {w.cpuTimeP50Ms ?? "-"} ms</span>
+        {cf?.configured && workers.length > 0 && (
+          <ResponsiveContainer width="100%" height={140}>
+            <BarChart data={barData}>
+              <CartesianGrid stroke="#1e2338" vertical={false} />
+              <XAxis dataKey="name" stroke="#5b5f78" fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis stroke="#5b5f78" fontSize={10} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={{ background: "#181c30", border: "1px solid #2a2f4a", borderRadius: 8, fontSize: 12 }} />
+              <Bar dataKey="requests" radius={[6, 6, 0, 0]}>
+                {barData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Card>
+
+      <Card>
+        {cf?.configured && workers.map((w) => {
+          const isActive = (w.requests || 0) > 0;
+          return (
+            <div key={w.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid #1e2338" }}>
+              <span style={{ width: 8, height: 8, borderRadius: 4, background: isActive ? "#4dd6c4" : "#5b5f78", flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{w.scriptName}</div>
+                <div style={{ display: "flex", gap: 14, fontSize: 11, color: "#7d8199", flexWrap: "wrap" }}>
+                  <span>Requests: {w.requests ?? "-"}</span>
+                  <span>Errors: {w.errors ?? "-"}</span>
+                  <span>CPU p50: {w.cpuTimeP50Ms ?? "-"} ms</span>
+                </div>
+              </div>
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: isActive ? "#4dd6c4" : "#7d8199", background: isActive ? "#4dd6c422" : "#1a1e33", padding: "3px 8px", borderRadius: 20, flexShrink: 0 }}>
+                {isActive ? "AKTIF" : "IDLE"}
+              </span>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </Card>
     </div>
   );
 }
 
-function StatRow({ label, value, good }) {
+function MiniStat({ icon: Icon, tint, label, value }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #1e2338", fontSize: 12.5, gap: 10 }}>
-      <span style={{ color: "#7d8199" }}>{label}</span>
-      <span style={{ fontWeight: 600, color: good ? "#4dd6c4" : "#e7e9f3", textAlign: "right", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</span>
-    </div>
+    <Card>
+      <div style={{ width: 30, height: 30, borderRadius: 8, background: `${tint}22`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+        <Icon size={15} color={tint} />
+      </div>
+      <div style={{ fontSize: 20, fontWeight: 700 }}>{value}</div>
+      <div style={{ fontSize: 11, color: "#7d8199", marginTop: 2 }}>{label}</div>
+    </Card>
   );
 }
