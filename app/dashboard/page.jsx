@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import {
   Github, ExternalLink, Star, GitFork, Clock, AlertTriangle,
   Activity, Zap, Database, Cloud, CircleCheck, Menu, Music2, Bot,
-  Globe, Radio, Copy,
+  Globe, Radio, Copy, Search, SkipBack, SkipForward, Pause, Play, ChevronDown,
 } from "lucide-react";
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -14,24 +14,264 @@ import {
 
 const PIE_COLORS = ["#c084fc", "#5b8def", "#4dd6c4", "#ff8a5b", "#f472b6", "#facc15"];
 
+const YT_SEARCH_API = "https://yt-music-portofolio.iostream911.workers.dev/";
+
+function formatTime(s) {
+  if (!s || isNaN(s)) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60).toString().padStart(2, "0");
+  return `${m}:${sec}`;
+}
+
+function useMusicPlayer() {
+  const [view, setView] = useState("closed"); // closed | search | now-playing | mini
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [queue, setQueue] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const playerRef = useRef(null);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (window.YT && window.YT.Player) return;
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+  }, []);
+
+  const waitForYT = (fn) => {
+    if (window.YT && window.YT.Player) fn();
+    else setTimeout(() => waitForYT(fn), 200);
+  };
+
+  const ensurePlayer = (videoId) => {
+    if (playerRef.current) {
+      playerRef.current.loadVideoById(videoId);
+      return;
+    }
+    playerRef.current = new window.YT.Player("yt-hidden-player", {
+      height: "0",
+      width: "0",
+      videoId,
+      playerVars: { autoplay: 1, controls: 0, disablekb: 1 },
+      events: {
+        onReady: (e) => e.target.playVideo(),
+        onStateChange: (e) => {
+          if (e.data === window.YT.PlayerState.PLAYING) {
+            setIsPlaying(true);
+            setDuration(playerRef.current.getDuration());
+          }
+          if (e.data === window.YT.PlayerState.PAUSED) setIsPlaying(false);
+          if (e.data === window.YT.PlayerState.ENDED) handleNextRef.current();
+        },
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (isPlaying) {
+      intervalRef.current = setInterval(() => {
+        if (playerRef.current?.getCurrentTime) setCurrentTime(playerRef.current.getCurrentTime());
+      }, 500);
+    } else {
+      clearInterval(intervalRef.current);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [isPlaying]);
+
+  const search = async (q) => {
+    setQuery(q);
+    if (!q.trim()) { setResults([]); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${YT_SEARCH_API}?q=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      if (json.error) setError(json.error);
+      setResults(json.items || []);
+    } catch (e) {
+      setError("Gagal mencari lagu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const playTrack = (track, list = results) => {
+    setQueue(list);
+    setCurrentIndex(list.findIndex((t) => t.id.videoId === track.id.videoId));
+    setView("now-playing");
+    setCurrentTime(0);
+    waitForYT(() => ensurePlayer(track.id.videoId));
+  };
+
+  const togglePlay = () => {
+    if (!playerRef.current) return;
+    isPlaying ? playerRef.current.pauseVideo() : playerRef.current.playVideo();
+  };
+
+  const seek = (time) => {
+    playerRef.current?.seekTo(time, true);
+    setCurrentTime(time);
+  };
+
+  const handleNext = () => {
+    if (queue.length === 0) return;
+    const next = (currentIndex + 1) % queue.length;
+    setCurrentIndex(next);
+    ensurePlayer(queue[next].id.videoId);
+    setCurrentTime(0);
+  };
+  const handleNextRef = useRef(handleNext);
+  handleNextRef.current = handleNext;
+
+  const handlePrev = () => {
+    if (queue.length === 0) return;
+    const prev = (currentIndex - 1 + queue.length) % queue.length;
+    setCurrentIndex(prev);
+    ensurePlayer(queue[prev].id.videoId);
+    setCurrentTime(0);
+  };
+
+  return {
+    view, setView, query, results, loading, error, search, playTrack,
+    togglePlay, seek, handleNext, handlePrev, isPlaying, currentTime, duration,
+    currentTrack: currentIndex >= 0 ? queue[currentIndex] : null,
+    openSearch: () => setView("search"),
+    closePlayer: () => setView("closed"),
+    minimize: () => setView("mini"),
+  };
+}
+
+function MusicPlayerUI({ music }) {
+  const { view, query, results, loading, error, search, playTrack, togglePlay,
+    seek, handleNext, handlePrev, isPlaying, currentTime, duration,
+    currentTrack, setView, closePlayer, minimize } = music;
+
+  const thumb = currentTrack?.snippet?.thumbnails?.medium?.url || currentTrack?.snippet?.thumbnails?.default?.url;
+
+  return (
+    <>
+      <div id="yt-hidden-player" style={{ position: "fixed", width: 0, height: 0, overflow: "hidden", top: -9999 }} />
+
+      {view === "search" && (
+        <div style={{ position: "fixed", inset: 0, background: "#0a0c14", zIndex: 200, display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 18px", borderBottom: "1px solid #1e2338" }}>
+            <button onClick={closePlayer} style={{ background: "none", border: "none", color: "#e7e9f3" }}><ChevronDown size={22} /></button>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "8px 12px" }}>
+              <Search size={16} color="#7d8199" />
+              <input
+                autoFocus value={query} onChange={(e) => search(e.target.value)}
+                placeholder="Cari lagu atau artis..."
+                style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 14 }}
+              />
+            </div>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "10px 14px" }}>
+            {loading && <p style={{ color: "#7d8199", fontSize: 13, textAlign: "center", marginTop: 20 }}>Mencari...</p>}
+            {error && <p style={{ color: "#ff8a9b", fontSize: 13, textAlign: "center", marginTop: 20 }}>{error}</p>}
+            {!loading && !error && results.length === 0 && query && (
+              <p style={{ color: "#7d8199", fontSize: 13, textAlign: "center", marginTop: 20 }}>Tidak ditemukan</p>
+            )}
+            {results.map((item) => (
+              <button key={item.id.videoId} onClick={() => playTrack(item)}
+                style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "none", border: "none", padding: "10px 4px", cursor: "pointer", textAlign: "left" }}>
+                <img src={item.snippet.thumbnails.default.url} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.snippet.title}</div>
+                  <div style={{ fontSize: 11.5, color: "#7d8199" }}>{item.snippet.channelTitle}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {view === "now-playing" && currentTrack && (
+        <div style={{ position: "fixed", inset: 0, background: "linear-gradient(180deg, #16224a, #0a0c14)", zIndex: 200, display: "flex", flexDirection: "column", padding: "18px 24px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <button onClick={minimize} style={{ background: "none", border: "none", color: "#e7e9f3" }}><ChevronDown size={24} /></button>
+            <span style={{ fontSize: 11, color: "#7d8199", fontWeight: 600, letterSpacing: 0.5 }}>SEDANG DIPUTAR</span>
+            <div style={{ width: 24 }} />
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 34 }}>
+            <div style={{
+              width: 260, height: 260, borderRadius: "50%",
+              background: "radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0a0a0a 60%, #000 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+              animation: isPlaying ? "spinVinyl 6s linear infinite" : "none",
+              position: "relative", border: "6px solid #111",
+            }}>
+              <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "repeating-radial-gradient(circle, transparent 0, transparent 6px, rgba(255,255,255,0.03) 7px)" }} />
+              <img src={thumb} alt="" style={{ width: 100, height: 100, borderRadius: "50%", objectFit: "cover", border: "3px solid #222" }} />
+              <div style={{ position: "absolute", width: 14, height: 14, borderRadius: "50%", background: "#0a0c14" }} />
+            </div>
+            <div style={{ textAlign: "center", maxWidth: 300 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentTrack.snippet.title}</div>
+              <div style={{ fontSize: 12.5, color: "#7d8199", marginTop: 4 }}>{currentTrack.snippet.channelTitle}</div>
+            </div>
+          </div>
+          <div style={{ paddingBottom: 24 }}>
+            <input type="range" min={0} max={duration || 0} value={currentTime} onChange={(e) => seek(Number(e.target.value))} style={{ width: "100%", accentColor: "#5b8def" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7d8199", marginTop: 2 }}>
+              <span>{formatTime(currentTime)}</span><span>{formatTime(duration)}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 34, marginTop: 20 }}>
+              <button onClick={handlePrev} style={{ background: "none", border: "none", color: "#e7e9f3" }}><SkipBack size={26} fill="#e7e9f3" /></button>
+              <button onClick={togglePlay} style={{ width: 60, height: 60, borderRadius: "50%", background: "#e7e9f3", border: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {isPlaying ? <Pause size={26} color="#0a0c14" fill="#0a0c14" /> : <Play size={26} color="#0a0c14" fill="#0a0c14" style={{ marginLeft: 3 }} />}
+              </button>
+              <button onClick={handleNext} style={{ background: "none", border: "none", color: "#e7e9f3" }}><SkipForward size={26} fill="#e7e9f3" /></button>
+            </div>
+          </div>
+          <style>{`@keyframes spinVinyl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
+      {view === "mini" && currentTrack && (
+        <div onClick={() => setView("now-playing")} style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 150, background: "#12162a", borderTop: "1px solid #1e2338", display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", cursor: "pointer" }}>
+          <img src={thumb} alt="" style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", animation: isPlaying ? "spinVinyl 4s linear infinite" : "none", flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentTrack.snippet.title}</div>
+            <div style={{ fontSize: 11, color: "#7d8199", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentTrack.snippet.channelTitle}</div>
+          </div>
+          <button onClick={(e) => { e.stopPropagation(); handlePrev(); }} style={{ background: "none", border: "none", color: "#e7e9f3" }}><SkipBack size={18} fill="#e7e9f3" /></button>
+          <button onClick={(e) => { e.stopPropagation(); togglePlay(); }} style={{ background: "none", border: "none", color: "#e7e9f3" }}>
+            {isPlaying ? <Pause size={22} fill="#e7e9f3" /> : <Play size={22} fill="#e7e9f3" />}
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); handleNext(); }} style={{ background: "none", border: "none", color: "#e7e9f3" }}><SkipForward size={18} fill="#e7e9f3" /></button>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function DashboardPage() {
   const [tab, setTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const music = useMusicPlayer();
 
   return (
     <div className="layout">
       <Sidebar open={sidebarOpen} tab={tab} setTab={setTab} />
-      <main className="main">
+      <main className="main" style={{ paddingBottom: music.view === "mini" ? 70 : 0 }}>
         <div className="topbar">
           <button className="toggle-btn" onClick={() => setSidebarOpen(o => !o)}>
             <Menu size={18} />
           </button>
         </div>
-        {tab === "overview" && <Overview />}
+        {tab === "overview" && <Overview onOpenMusic={music.openSearch} />}
         {tab === "projects" && <Projects />}
         {tab === "vercel" && <VercelProject />}
         {tab === "database" && <DatabasePanel />}
       </main>
+      <MusicPlayerUI music={music} />
     </div>
   );
 }
@@ -101,7 +341,7 @@ function GradientCard({ label, value, sub, from, to, style }) {
 
 function IconStatCard({ icon: Icon, label, tint, note }) {
   return (
-    <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 16, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+    <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 16, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8, flex: 1, height: "100%" }}>
       <div style={{ width: 32, height: 32, borderRadius: 9, background: `${tint}22`, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Icon size={16} color={tint} />
       </div>
@@ -158,7 +398,6 @@ function useClock() {
 }
 
 // ---------- Grafik bukit: data asli aktivitas GitHub harian (14 hari) ----------
-// Fallback ke random walk kalau fetch gagal total (offline dsb)
 function useActivityWave() {
   const [data, setData] = useState(
     Array.from({ length: 14 }, (_, i) => ({ x: i, y: Math.round(20 + Math.random() * 60) }))
@@ -205,7 +444,7 @@ function useApiLatency() {
 }
 
 // ---------- OVERVIEW ----------
-function Overview() {
+function Overview({ onOpenMusic }) {
   const [gh, setGh] = useState(null);
   const [vc, setVc] = useState(null);
   const [sb, setSb] = useState(null);
@@ -257,7 +496,9 @@ function Overview() {
         </div>
 
         <div className="hero-icons">
-          <IconStatCard icon={Music2} label="Music" tint="#f472b6" note="Segera: YouTube Music" />
+          <button onClick={onOpenMusic} style={{ all: "unset", cursor: "pointer", flex: 1 }}>
+            <IconStatCard icon={Music2} label="Music" tint="#f472b6" note="Cari & putar lagu" />
+          </button>
           <IconStatCard icon={Bot} label="Assistant" tint="#5b8def" note="Segera: Gemini AI" />
         </div>
 
@@ -357,7 +598,6 @@ function langColor(lang) {
   return LANG_COLORS[lang] || "#8b8fa8";
 }
 
-// ---------- GITHUB PROJECTS ----------
 function Projects() {
   const [repos, setRepos] = useState(null);
   const [error, setError] = useState(null);
