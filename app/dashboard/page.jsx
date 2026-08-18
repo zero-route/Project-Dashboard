@@ -544,7 +544,7 @@ function Overview({ onOpenMusic }) {
           <button onClick={onOpenMusic} style={{ all: "unset", cursor: "pointer", flex: 1 }}>
             <IconStatCard icon={Music2} label="Music" tint="#f472b6" note="Cari & putar lagu" />
           </button>
-          <IconStatCard icon={Bot} label="Assistant" tint="#5b8def" note="Segera: Gemini AI" />
+          <IconStatCard icon={Bot} label="Assistant" tint="#5b8def" note="Segera hadir: Lily asisten" />
         </div>
 
         <div className="hero-calendar">
