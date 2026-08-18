@@ -656,7 +656,7 @@ function Projects() {
 
   return (
     <div>
-      <SectionTitle title="Project GitHub" sub="Data langsung dari repository zero-route>
+      <SectionTitle title="Project GitHub" sub="Data langsung dari repository zero-route" />
       {error && (
         <div style={{ display: "flex", gap: 8, background: "#2a1620", border: "1px solid #4a1e2f", color: "#ff8a9b", padding: 12, borderRadius: 10, fontSize: 12.5, marginBottom: 14 }}>
           <AlertTriangle size={16} /> {error}
