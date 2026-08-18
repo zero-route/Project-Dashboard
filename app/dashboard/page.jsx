@@ -319,6 +319,14 @@ function Overview() {
   );
 }
 
+function StatRow({ label, value, good }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid #1e2338" }}>
+      <span style={{ fontSize: 12.5, color: "#9aa0bd" }}>{label}</span>
+      <span style={{ fontSize: 12.5, fontWeight: 600, color: good ? "#4dd6c4" : "#e7e9f3" }}>{value}</span>
+    </div>
+  );
+
 function DbRow({ icon: Icon, name, ok, detail }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #1e2338" }}>
