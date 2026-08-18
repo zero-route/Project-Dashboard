@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import {
   Github, ExternalLink, Star, GitFork, Clock, AlertTriangle,
   Activity, Zap, Database, Cloud, CircleCheck, Menu, Music2, Bot,
+  Globe, Radio, Copy,
 } from "lucide-react";
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -442,28 +443,112 @@ function Projects() {
   );
 }
 
-// ---------- VERCEL ----------
+function PulseMonitor({ alive, label }) {
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, #0e1633, #16224a)",
+      border: "1px solid #22284a", borderRadius: 18, padding: "20px 22px",
+      display: "flex", alignItems: "center", gap: 18, overflow: "hidden", position: "relative",
+    }}>
+      <div style={{
+        width: 46, height: 46, borderRadius: "50%", flexShrink: 0,
+        background: alive ? "#4dd6c422" : "#7d819922",
+        display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
+      }}>
+        <span style={{
+          position: "absolute", inset: 0, borderRadius: "50%",
+          border: `2px solid ${alive ? "#4dd6c4" : "#7d8199"}`,
+          animation: alive ? "pulseRing 1.6s ease-out infinite" : "none",
+        }} />
+        <Radio size={20} color={alive ? "#4dd6c4" : "#7d8199"} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>
+          {alive ? "Sinyal Hidup" : "Sinyal Terputus"}
+        </div>
+        <div style={{ fontSize: 11.5, color: "#7d8199", marginTop: 2 }}>{label}</div>
+      </div>
+      <svg width="120" height="40" viewBox="0 0 120 40" style={{ flexShrink: 0, opacity: alive ? 1 : 0.3 }}>
+        <polyline
+          points="0,20 15,20 22,6 28,34 34,20 45,20 50,12 55,28 60,20 120,20"
+          fill="none" stroke="#4dd6c4" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"
+          style={{ animation: alive ? "ekgMove 2.4s linear infinite" : "none" }}
+        />
+      </svg>
+      <style>{`
+        @keyframes pulseRing { 0% { transform: scale(0.8); opacity: 0.9; } 100% { transform: scale(1.8); opacity: 0; } }
+        @keyframes ekgMove { 0% { stroke-dasharray: 0 300; } 60% { stroke-dasharray: 300 0; } 100% { stroke-dasharray: 300 0; } }
+      `}</style>
+    </div>
+  );
+}
+
+function InfoRow({ icon: Icon, label, value, copyable }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 0", borderBottom: "1px solid #1e2338" }}>
+      <Icon size={14} color="#7d8199" style={{ flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 10.5, color: "#7d8199" }}>{label}</div>
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {value}
+        </div>
+      </div>
+      {copyable && value && value !== "-" && (
+        <button
+          onClick={() => navigator.clipboard?.writeText(value)}
+          style={{ background: "#1a1e33", border: "1px solid #2a2f4a", borderRadius: 8, padding: 6, color: "#9aa0bd", cursor: "pointer", flexShrink: 0 }}
+        >
+          <Copy size={12} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 function VercelProject() {
   const [vc, setVc] = useState(null);
   useEffect(() => {
     fetch("/api/vercel/project").then(r => r.json()).then(setVc).catch(() => {});
   }, []);
 
+  const isReady = vc?.configured && (vc.status || "").toLowerCase().includes("ready");
+
   return (
     <div>
       <SectionTitle title="DeadmanSwitcha — Vercel" sub="Status deployment project" />
-      <div className="grid-2" style={{ marginBottom: 14 }}>
-        <GradientCard label="Status" value={vc?.configured ? (vc.status ?? "Live") : "-"} sub="deployment terbaru" from="#4dd6c4" to="#2aa198" />
-        <GradientCard label="Domain" value={vc?.url ? "Aktif" : "-"} sub={vc?.url || ""} from="#ff8a5b" to="#f4527a" />
+
+      <div style={{ marginBottom: 14 }}>
+        <PulseMonitor
+          alive={!!vc?.configured}
+          label={vc?.configured ? `Status: ${vc.status || "-"}` : "Menunggu koneksi ke Vercel API..."}
+        />
       </div>
+
+      <div className="grid-2" style={{ marginBottom: 14 }}>
+        <GradientCard
+          label="Status"
+          value={vc?.configured ? (vc.status ?? "Live") : "-"}
+          sub="deployment terbaru"
+          from={isReady ? "#4dd6c4" : "#ff8a5b"}
+          to={isReady ? "#2aa198" : "#f4527a"}
+        />
+        <GradientCard
+          label="Domain"
+          value={vc?.url ? "Aktif" : "-"}
+          sub={vc?.url || "Belum ada domain"}
+          from="#c084fc" to="#7c5cf0"
+        />
+      </div>
+
       <Card>
-        {!vc && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat...</p>}
-        {vc && !vc.configured && <div style={{ fontSize: 13, color: "#7d8199" }}>{vc.message}</div>}
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Detail Deployment</div>
+        {!vc && <p style={{ color: "#7d8199", fontSize: 13, marginTop: 10 }}>Memuat...</p>}
+        {vc && !vc.configured && <div style={{ fontSize: 13, color: "#7d8199", marginTop: 10 }}>{vc.message}</div>}
         {vc?.configured && (
           <>
-            <StatRow label="Status deployment" value={vc.status || "-"} good />
-            <StatRow label="URL" value={vc.url || "-"} />
-            <StatRow label="Dibuat" value={vc.createdAt ? new Date(vc.createdAt).toLocaleString("id-ID") : "-"} />
+            <InfoRow icon={Zap} label="Status deployment" value={vc.status || "-"} />
+            <InfoRow icon={Globe} label="URL" value={vc.url || "-"} copyable />
+            <InfoRow icon={Clock} label="Dibuat" value={vc.createdAt ? new Date(vc.createdAt).toLocaleString("id-ID") : "-"} />
           </>
         )}
       </Card>
