@@ -515,7 +515,7 @@ function VercelProject() {
 
   return (
     <div>
-      <SectionTitle title="DeadmanSwitcha — Vercel" sub="Status deployment project" />
+      <SectionTitle title="DeadmanSwitch — Vercel" sub="Status deployment project" />
 
       <div style={{ marginBottom: 14 }}>
         <PulseMonitor
