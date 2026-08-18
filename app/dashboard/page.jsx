@@ -159,81 +159,125 @@ function MusicPlayerUI({ music }) {
     <>
       <div id="yt-hidden-player" style={{ position: "fixed", width: 0, height: 0, overflow: "hidden", top: -9999 }} />
 
+      {/* POPUP CARD SEARCH */}
       {view === "search" && (
-        <div style={{ position: "fixed", inset: 0, background: "#0a0c14", zIndex: 200, display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 18px", borderBottom: "1px solid #1e2338" }}>
-            <button onClick={closePlayer} style={{ background: "none", border: "none", color: "#e7e9f3" }}><ChevronDown size={22} /></button>
-            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "8px 12px" }}>
-              <Search size={16} color="#7d8199" />
-              <input
-                autoFocus value={query} onChange={(e) => search(e.target.value)}
-                placeholder="Cari lagu atau artis..."
-                style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 14 }}
-              />
-            </div>
-          </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: "10px 14px" }}>
-            {loading && <p style={{ color: "#7d8199", fontSize: 13, textAlign: "center", marginTop: 20 }}>Mencari...</p>}
-            {error && <p style={{ color: "#ff8a9b", fontSize: 13, textAlign: "center", marginTop: 20 }}>{error}</p>}
-            {!loading && !error && results.length === 0 && query && (
-              <p style={{ color: "#7d8199", fontSize: 13, textAlign: "center", marginTop: 20 }}>Tidak ditemukan</p>
-            )}
-            {results.map((item) => (
-              <button key={item.id.videoId} onClick={() => playTrack(item)}
-                style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "none", border: "none", padding: "10px 4px", cursor: "pointer", textAlign: "left" }}>
-                <img src={item.snippet.thumbnails.default.url} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.snippet.title}</div>
-                  <div style={{ fontSize: 11.5, color: "#7d8199" }}>{item.snippet.channelTitle}</div>
-                </div>
+        <div 
+          onClick={closePlayer}
+          style={{ 
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", 
+            zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              width: "100%", maxWidth: 420, maxHeight: "80vh", background: "#0a0c14", 
+              border: "1px solid #1e2338", borderRadius: 24, boxShadow: "0 20px 50px rgba(0,0,0,0.6)", 
+              display: "flex", flexDirection: "column", overflow: "hidden" 
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 18px", borderBottom: "1px solid #1e2338" }}>
+              <button onClick={closePlayer} style={{ background: "none", border: "none", color: "#e7e9f3", cursor: "pointer", display: "flex" }}>
+                <ChevronDown size={22} />
               </button>
-            ))}
+              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "8px 12px" }}>
+                <Search size={16} color="#7d8199" />
+                <input
+                  autoFocus value={query} onChange={(e) => search(e.target.value)}
+                  placeholder="Cari lagu atau artis..."
+                  style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 14 }}
+                />
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "10px 14px", maxHeight: "60vh" }}>
+              {loading && <p style={{ color: "#7d8199", fontSize: 13, textAlign: "center", marginTop: 20 }}>Mencari...</p>}
+              {error && <p style={{ color: "#ff8a9b", fontSize: 13, textAlign: "center", marginTop: 20 }}>{error}</p>}
+              {!loading && !error && results.length === 0 && query && (
+                <p style={{ color: "#7d8199", fontSize: 13, textAlign: "center", marginTop: 20 }}>Tidak ditemukan</p>
+              )}
+              {results.map((item) => (
+                <button key={item.id.videoId} onClick={() => playTrack(item)}
+                  style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "none", border: "none", padding: "10px 4px", cursor: "pointer", textAlign: "left" }}>
+                  <img src={item.snippet.thumbnails.default.url} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.snippet.title}</div>
+                    <div style={{ fontSize: 11.5, color: "#7d8199" }}>{item.snippet.channelTitle}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
+      {/* POPUP CARD NOW PLAYING */}
       {view === "now-playing" && currentTrack && (
-        <div style={{ position: "fixed", inset: 0, background: "linear-gradient(180deg, #16224a, #0a0c14)", zIndex: 200, display: "flex", flexDirection: "column", padding: "18px 24px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <button onClick={minimize} style={{ background: "none", border: "none", color: "#e7e9f3" }}><ChevronDown size={24} /></button>
-            <span style={{ fontSize: 11, color: "#7d8199", fontWeight: 600, letterSpacing: 0.5 }}>SEDANG DIPUTAR</span>
-            <div style={{ width: 24 }} />
-          </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 34 }}>
-            <div style={{
-              width: 260, height: 260, borderRadius: "50%",
-              background: "radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0a0a0a 60%, #000 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
-              animation: isPlaying ? "spinVinyl 6s linear infinite" : "none",
-              position: "relative", border: "6px solid #111",
-            }}>
-              <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "repeating-radial-gradient(circle, transparent 0, transparent 6px, rgba(255,255,255,0.03) 7px)" }} />
-              <img src={thumb} alt="" style={{ width: 100, height: 100, borderRadius: "50%", objectFit: "cover", border: "3px solid #222" }} />
-              <div style={{ position: "absolute", width: 14, height: 14, borderRadius: "50%", background: "#0a0c14" }} />
-            </div>
-            <div style={{ textAlign: "center", maxWidth: 300 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentTrack.snippet.title}</div>
-              <div style={{ fontSize: 12.5, color: "#7d8199", marginTop: 4 }}>{currentTrack.snippet.channelTitle}</div>
-            </div>
-          </div>
-          <div style={{ paddingBottom: 24 }}>
-            <input type="range" min={0} max={duration || 0} value={currentTime} onChange={(e) => seek(Number(e.target.value))} style={{ width: "100%", accentColor: "#5b8def" }} />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7d8199", marginTop: 2 }}>
-              <span>{formatTime(currentTime)}</span><span>{formatTime(duration)}</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 34, marginTop: 20 }}>
-              <button onClick={handlePrev} style={{ background: "none", border: "none", color: "#e7e9f3" }}><SkipBack size={26} fill="#e7e9f3" /></button>
-              <button onClick={togglePlay} style={{ width: 60, height: 60, borderRadius: "50%", background: "#e7e9f3", border: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {isPlaying ? <Pause size={26} color="#0a0c14" fill="#0a0c14" /> : <Play size={26} color="#0a0c14" fill="#0a0c14" style={{ marginLeft: 3 }} />}
+        <div 
+          onClick={minimize}
+          style={{ 
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", 
+            zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              width: "100%", maxWidth: 380, background: "linear-gradient(180deg, #16224a, #0a0c14)", 
+              border: "1px solid #1e2338", borderRadius: 28, boxShadow: "0 25px 60px rgba(0,0,0,0.7)", 
+              display: "flex", flexDirection: "column", padding: "20px 22px", overflow: "hidden" 
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <button onClick={minimize} style={{ background: "none", border: "none", color: "#e7e9f3", cursor: "pointer", display: "flex" }}>
+                <ChevronDown size={22} />
               </button>
-              <button onClick={handleNext} style={{ background: "none", border: "none", color: "#e7e9f3" }}><SkipForward size={26} fill="#e7e9f3" /></button>
+              <span style={{ fontSize: 10.5, color: "#7d8199", fontWeight: 700, letterSpacing: 0.8 }}>SEDANG DIPUTAR</span>
+              <div style={{ width: 22 }} />
             </div>
+
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, margin: "10px 0 20px" }}>
+              <div style={{
+                width: 170, height: 170, borderRadius: "50%",
+                background: "radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0a0a0a 60%, #000 100%)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 12px 30px rgba(0,0,0,0.6)",
+                animation: isPlaying ? "spinVinyl 6s linear infinite" : "none",
+                position: "relative", border: "5px solid #111", flexShrink: 0
+              }}>
+                <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "repeating-radial-gradient(circle, transparent 0, transparent 5px, rgba(255,255,255,0.03) 6px)" }} />
+                <img src={thumb} alt="" style={{ width: 68, height: 68, borderRadius: "50%", objectFit: "cover", border: "2px solid #222" }} />
+                <div style={{ position: "absolute", width: 10, height: 10, borderRadius: "50%", background: "#0a0c14" }} />
+              </div>
+
+              <div style={{ textAlign: "center", maxWidth: "100%" }}>
+                <div style={{ fontSize: 14.5, fontWeight: 700, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentTrack.snippet.title}</div>
+                <div style={{ fontSize: 12, color: "#7d8199", marginTop: 3 }}>{currentTrack.snippet.channelTitle}</div>
+              </div>
+            </div>
+
+            <div>
+              <input type="range" min={0} max={duration || 0} value={currentTime} onChange={(e) => seek(Number(e.target.value))} style={{ width: "100%", accentColor: "#5b8def", cursor: "pointer" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "#7d8199", marginTop: 2 }}>
+                <span>{formatTime(currentTime)}</span><span>{formatTime(duration)}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28, marginTop: 14 }}>
+                <button onClick={handlePrev} style={{ background: "none", border: "none", color: "#e7e9f3", cursor: "pointer" }}>
+                  <SkipBack size={22} fill="#e7e9f3" />
+                </button>
+                <button onClick={togglePlay} style={{ width: 50, height: 50, borderRadius: "50%", background: "#e7e9f3", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                  {isPlaying ? <Pause size={22} color="#0a0c14" fill="#0a0c14" /> : <Play size={22} color="#0a0c14" fill="#0a0c14" style={{ marginLeft: 2 }} />}
+                </button>
+                <button onClick={handleNext} style={{ background: "none", border: "none", color: "#e7e9f3", cursor: "pointer" }}>
+                  <SkipForward size={22} fill="#e7e9f3" />
+                </button>
+              </div>
+            </div>
+            <style>{`@keyframes spinVinyl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
           </div>
-          <style>{`@keyframes spinVinyl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
 
+      {/* MINI PLAYER (TIDAK DIUBAH) */}
       {view === "mini" && currentTrack && (
         <div onClick={() => setView("now-playing")} style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 150, background: "#12162a", borderTop: "1px solid #1e2338", display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", cursor: "pointer" }}>
           <img src={thumb} alt="" style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", animation: isPlaying ? "spinVinyl 4s linear infinite" : "none", flexShrink: 0 }} />
@@ -251,6 +295,7 @@ function MusicPlayerUI({ music }) {
     </>
   );
 }
+
 
 export default function DashboardPage() {
   const [tab, setTab] = useState("overview");
