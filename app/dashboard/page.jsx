@@ -866,7 +866,6 @@ function WeatherWidget() {
   <WeatherWidget />
 </div>
       </div>
-      </div>
 
       <Card style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4, flexWrap: "wrap", gap: 6 }}>
