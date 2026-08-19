@@ -933,19 +933,39 @@ function DbRow({ icon: Icon, name, ok, detail }) {
 }
 
 const LANG_COLORS = {
+  JSX: "#f0db4f",
+  TSX: "#5b8def",
+  React: "#61dafb",
   JavaScript: "#f0db4f",
   TypeScript: "#5b8def",
   HTML: "#ff8a5b",
   CSS: "#5be0c4",
   Python: "#facc15",
   Go: "#4dd6c4",
-  C: "#c084fc",
-  "C++": "#c084fc",
-  Java: "#f4527a",
 };
+
 function langColor(lang) {
   return LANG_COLORS[lang] || "#8b8fa8";
 }
+
+function getCustomLanguageLabel(repo) {
+  const lang = repo.language;
+  const name = repo.name.toLowerCase();
+
+  if (lang === "JavaScript") {
+    if (name.includes("dashboard") || name.includes("react") || name.includes("web") || name.includes("dex") || name.includes("vault")) {
+      return "JSX";
+    }
+  }
+  if (lang === "TypeScript") {
+    if (name.includes("switch") || name.includes("next") || name.includes("bot")) {
+      return "TSX";
+    }
+  }
+
+  return lang || "Unknown";
+}
+
 
 function Projects() {
   const [repos, setRepos] = useState(null);
@@ -1071,7 +1091,8 @@ function Projects() {
       {/* GRID CARDS */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
         {filteredRepos?.map((r) => {
-          const color = langColor(r.language);
+          const displayLang = getCustomLanguageLabel(r);
+          const color = langColor(displayLang);
           const isLive = !!r.liveUrl;
           const isPinned = r.isPinned || isLive;
 
