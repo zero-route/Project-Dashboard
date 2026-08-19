@@ -966,7 +966,6 @@ function getCustomLanguageLabel(repo) {
   return lang || "Unknown";
 }
 
-
 function Projects() {
   const [repos, setRepos] = useState(null);
   const [error, setError] = useState(null);
@@ -983,14 +982,14 @@ function Projects() {
       .catch((err) => setError(String(err)));
   }, []);
 
-  const languages = ["All", ...new Set(repos?.map((r) => r.language).filter(Boolean) || [])];
+  const languages = ["All", ...new Set(repos?.map((r) => getCustomLanguageLabel(r)).filter(Boolean) || [])];
 
   const filteredRepos = repos
     ?.filter((r) => {
       const matchesSearch =
         r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesLang = selectedLang === "All" || r.language === selectedLang;
+      const matchesLang = selectedLang === "All" || getCustomLanguageLabel(r) === selectedLang;
       return matchesSearch && matchesLang;
     })
     ?.sort((a, b) => {
@@ -1007,7 +1006,6 @@ function Projects() {
     <div>
       <SectionTitle title="Project GitHub" sub="Repository publik & live project zero-route" />
 
-      {/* STATISTIK RINGKASAN */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
         <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
           <Github size={18} color="#5b8def" style={{ flexShrink: 0 }} />
@@ -1042,7 +1040,6 @@ function Projects() {
         </div>
       </div>
 
-      {/* SEARCH & FILTER */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px" }}>
           <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
@@ -1088,7 +1085,6 @@ function Projects() {
 
       {!repos && !error && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data repo...</p>}
 
-      {/* GRID CARDS */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
         {filteredRepos?.map((r) => {
           const displayLang = getCustomLanguageLabel(r);
@@ -1106,7 +1102,7 @@ function Projects() {
                 padding: "14px",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "space-between",
+                justify="space-between",
                 position: "relative",
                 overflow: "hidden",
               }}
@@ -1155,10 +1151,10 @@ function Projects() {
 
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10.5, color: "#7d8199", marginBottom: 10, paddingTop: 8, borderTop: "1px solid #1a1e33" }}>
-                  {r.language ? (
+                  {displayLang ? (
                     <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
-                      {r.language}
+                      {displayLang}
                     </span>
                   ) : <span />}
 
