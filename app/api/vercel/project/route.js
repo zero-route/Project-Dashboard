@@ -1,32 +1,26 @@
 // GET /api/vercel/project
-// TODO: aktifkan setelah VERCEL_TOKEN & VERCEL_PROJECT_ID diisi di .env.local
-//
-// Endpoint Vercel yang relevan nanti:
-// - Deployment terbaru:  GET https://api.vercel.com/v6/deployments?projectId={id}&limit=1
-// - Detail deployment:   GET https://api.vercel.com/v13/deployments/{deploymentId}
-// - Web Analytics:       GET https://api.vercel.com/v1/web-analytics/... (butuh plan Pro)
-//
-// Auth header: Authorization: Bearer ${VERCEL_TOKEN}
+// Mengambil seluruh daftar project dari akun Vercel kamu.
 
 export async function GET() {
-  const token = process.env.MONITOR_VERCEL_TOKEN;
-const projectId = process.env.MONITOR_VERCEL_PROJECT_ID;
+  // Cek token bawaan atau token bernama MONITOR_VERCEL_TOKEN
+  const token = process.env.VERCEL_TOKEN || process.env.MONITOR_VERCEL_TOKEN;
 
-  if (!token || !projectId) {
+  if (!token) {
     return Response.json(
       {
         configured: false,
-        message: "VERCEL_TOKEN / VERCEL_PROJECT_ID belum diset. Menampilkan data kosong.",
+        message: "VERCEL_TOKEN / MONITOR_VERCEL_TOKEN belum diset.",
       },
       { status: 200 }
     );
   }
 
   try {
-    const res = await fetch(
-      `https://api.vercel.com/v6/deployments?projectId=${projectId}&limit=1`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 60 } }
-    );
+    // Endpoint Vercel v9/projects mengambil SEMUA project di akunmu
+    const res = await fetch("https://api.vercel.com/v9/projects", {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { revalidate: 60 }, // Cache 1 menit
+    });
 
     if (!res.ok) {
       const body = await res.text();
@@ -37,13 +31,22 @@ const projectId = process.env.MONITOR_VERCEL_PROJECT_ID;
     }
 
     const data = await res.json();
-    const latest = data.deployments?.[0];
+
+    const projects =
+      data.projects?.map((p) => ({
+        id: p.id,
+        name: p.name,
+        framework: p.framework || "nextjs",
+        updatedAt: p.updatedAt,
+        url: p.targets?.production?.url
+          ? `https://${p.targets.production.url}`
+          : null,
+        status: p.targets?.production?.readyState || "READY",
+      })) || [];
 
     return Response.json({
       configured: true,
-      status: latest?.state,
-      url: latest?.url,
-      createdAt: latest?.createdAt,
+      projects,
     });
   } catch (err) {
     return Response.json(
