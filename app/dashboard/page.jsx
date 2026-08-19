@@ -892,80 +892,279 @@ function langColor(lang) {
 function Projects() {
   const [repos, setRepos] = useState(null);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLang, setSelectedLang] = useState("All");
 
   useEffect(() => {
     fetch("/api/github/repos")
       .then((res) => res.json())
-      .then((data) => { if (data.error) setError(data.error); else setRepos(data.repos); })
+      .then((data) => {
+        if (data.error) setError(data.error);
+        else setRepos(data.repos);
+      })
       .catch((err) => setError(String(err)));
   }, []);
 
+  // Filter Bahasa
+  const languages = ["All", ...new Set(repos?.map((r) => r.language).filter(Boolean) || [])];
+
+  // Logika Filter & Pinned Sorting
+  const filteredRepos = repos
+    ?.filter((r) => {
+      const matchesSearch =
+        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesLang = selectedLang === "All" || r.language === selectedLang;
+      return matchesSearch && matchesLang;
+    })
+    ?.sort((a, b) => {
+      // Prioritaskan yang punya liveUrl atau repository pilihan sebagai "Pinned"
+      const aPinned = a.isPinned || !!a.liveUrl;
+      const bPinned = b.isPinned || !!b.liveUrl;
+      return bPinned - aPinned;
+    });
+
+  // Statistik Ringkasan
+  const totalStars = repos?.reduce((acc, r) => acc + (r.stars || 0), 0) || 0;
+  const totalForks = repos?.reduce((acc, r) => acc + (r.forks || 0), 0) || 0;
+  const totalLive = repos?.filter((r) => !!r.liveUrl).length || 0;
+
   return (
     <div>
-      <SectionTitle title="Project GitHub" sub="Data langsung dari repository zero-route" />
+      <SectionTitle title="Project GitHub" sub="Repository publik & live project zero-route" />
+
+      {/* 1. STATISTIK RINGKASAN */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 18 }}>
+        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Github size={18} color="#5b8def" />
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3" }}>{repos?.length || 0}</div>
+            <div style={{ fontSize: 10.5, color: "#7d8199" }}>Total Repos</div>
+          </div>
+        </div>
+        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Globe size={18} color="#4dd6c4" />
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3" }}>{totalLive}</div>
+            <div style={{ fontSize: 10.5, color: "#7d8199" }}>Live Web</div>
+          </div>
+        </div>
+        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Star size={18} color="#facc15" />
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3" }}>{totalStars}</div>
+            <div style={{ fontSize: 10.5, color: "#7d8199" }}>Total Stars</div>
+          </div>
+        </div>
+        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+          <GitFork size={18} color="#c084fc" />
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3" }}>{totalForks}</div>
+            <div style={{ fontSize: 10.5, color: "#7d8199" }}>Total Forks</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter & Search Bar */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 200, display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "8px 12px" }}>
+          <Search size={15} color="#7d8199" />
+          <input
+            type="text"
+            placeholder="Cari project..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 13 }}
+          />
+        </div>
+
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
+          {languages.map((lang) => (
+            <button
+              key={lang}
+              onClick={() => setSelectedLang(lang)}
+              style={{
+                background: selectedLang === lang ? "#5b8def" : "#12162a",
+                border: "1px solid",
+                borderColor: selectedLang === lang ? "#5b8def" : "#1e2338",
+                color: selectedLang === lang ? "#fff" : "#8b8fa8",
+                borderRadius: 10,
+                padding: "6px 12px",
+                fontSize: 12,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                fontWeight: 500,
+              }}
+            >
+              {lang}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {error && (
         <div style={{ display: "flex", gap: 8, background: "#2a1620", border: "1px solid #4a1e2f", color: "#ff8a9b", padding: 12, borderRadius: 10, fontSize: 12.5, marginBottom: 14 }}>
           <AlertTriangle size={16} /> {error}
         </div>
       )}
+
       {!repos && !error && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data repo...</p>}
-      <div style={{ display: "grid", gap: 12 }}>
-        {repos?.map((r) => {
+
+      {/* 2. GRID LAYOUT (AUTO FIT 2 KOLOM DI DESKTOP, 1 KOLOM DI MOBILE) */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
+        {filteredRepos?.map((r) => {
           const color = langColor(r.language);
           const isLive = !!r.liveUrl;
+          const isPinned = r.isPinned || isLive; // Otomatis tag PINNED untuk repo unggulan/live
+
           return (
-            <div key={r.name} style={{
-              background: "#12162a", border: "1px solid #1e2338", borderRadius: 16,
-              padding: "16px 18px 16px 16px", display: "flex", gap: 14, flexWrap: "wrap",
-              borderLeft: `3px solid ${color}`, position: "relative", overflow: "hidden",
-            }}>
-              <div style={{
-                position: "absolute", top: 0, right: 0, width: 140, height: 140,
-                background: `radial-gradient(circle at top right, ${color}22, transparent 70%)`,
-                pointerEvents: "none",
-              }} />
-              <div style={{
-                width: 38, height: 38, borderRadius: 10, background: `${color}22`,
-                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, zIndex: 1,
-              }}>
-                <Github size={17} color={color} />
-              </div>
-              <div style={{ flex: 1, minWidth: 160, zIndex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa" }}>{r.name}</span>
-                  {isLive && (
-                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.4, background: "#4dd6c422", color: "#4dd6c4", padding: "2px 8px", borderRadius: 20 }}>
-                      LIVE
-                    </span>
-                  )}
-                </div>
-                <div style={{ fontSize: 11.5, color: "#9aa0bd", marginTop: 3 }}>{r.description || "Tidak ada deskripsi"}</div>
-                <div style={{ display: "flex", gap: 10, marginTop: 9, fontSize: 11, color: "#7d8199", flexWrap: "wrap" }}>
-                  {r.language && (
-                    <span style={{ display: "flex", alignItems: "center", gap: 4, background: "#1a1e33", padding: "3px 8px", borderRadius: 20 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: 4, background: color }} /> {r.language}
-                    </span>
-                  )}
-                  <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Star size={11} /> {r.stars}</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 3 }}><GitFork size={11} /> {r.forks}</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Clock size={11} /> {new Date(r.updatedAt).toLocaleDateString("id-ID")}</span>
-                </div>
-              </div>
-              <a
-                href={isLive ? r.liveUrl : r.url}
-                target="_blank"
-                rel="noreferrer"
+            <div
+              key={r.name}
+              style={{
+                background: "#12162a",
+                border: isPinned ? "1px solid #2e3859" : "1px solid #1e2338",
+                borderRadius: 16,
+                padding: "16px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              {/* Background Glow */}
+              <div
                 style={{
-                  display: "flex", alignItems: "center", gap: 5, alignSelf: "center", zIndex: 1,
-                  background: isLive ? `${color}` : "#1a1e33",
-                  border: isLive ? "none" : "1px solid #2a2f4a",
-                  color: isLive ? "#0a0c14" : "#e7e9f3",
-                  fontWeight: isLive ? 700 : 500,
-                  padding: "8px 12px", borderRadius: 9, fontSize: 12, textDecoration: "none", flexShrink: 0,
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  width: 120,
+                  height: 120,
+                  background: `radial-gradient(circle at top right, ${color}18, transparent 70%)`,
+                  pointerEvents: "none",
                 }}
-              >
-                {isLive ? "Buka Web" : "Buka Repo"} <ExternalLink size={12} />
-              </a>
+              />
+
+              <div>
+                {/* Header Card & 3. PINNED/FEATURED TAG */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Github size={16} color={color} />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {r.name}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                    {isPinned && (
+                      <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.4, background: "#c084fc22", color: "#c084fc", padding: "2px 6px", borderRadius: 6, border: "1px solid #c084fc44" }}>
+                        PINNED
+                      </span>
+                    )}
+                    {isLive && (
+                      <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.4, background: "#4dd6c422", color: "#4dd6c4", padding: "2px 6px", borderRadius: 6, border: "1px solid #4dd6c444" }}>
+                        LIVE
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Deskripsi Project */}
+                <p style={{ fontSize: 12, color: "#8b8fa8", margin: "0 0 14px 0", lineHeight: 1.4, minHeight: 34, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                  {r.description || "Tidak ada deskripsi tersedia."}
+                </p>
+              </div>
+
+              <div>
+                {/* Information Metadata */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, color: "#7d8199", marginBottom: 12, paddingTop: 10, borderTop: "1px solid #1a1e33" }}>
+                  {r.language ? (
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
+                      {r.language}
+                    </span>
+                  ) : <span />}
+
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Star size={11} /> {r.stars}</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}><GitFork size={11} /> {r.forks}</span>
+                  </div>
+                </div>
+
+                {/* 4. DUAL ACTION BUTTON (REPO & LIVE DEMO) */}
+                <div style={{ display: "flex", gap: 8 }}>
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 5,
+                      background: "#1a1e33",
+                      border: "1px solid #2a2f4a",
+                      color: "#e7e9f3",
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Repo <ExternalLink size={11} />
+                  </a>
+
+                  {isLive ? (
+                    <a
+                      href={r.liveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 5,
+                        background: color,
+                        border: "none",
+                        color: "#0a0c14",
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        textDecoration: "none",
+                      }}
+                    >
+                      Live Demo <ExternalLink size={11} />
+                    </a>
+                  ) : (
+                    <button
+                      disabled
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 5,
+                        background: "#12162a",
+                        border: "1px solid #1a1e33",
+                        color: "#5b5f78",
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        fontSize: 11.5,
+                        fontWeight: 500,
+                        cursor: "not-allowed",
+                      }}
+                    >
+                      No Demo
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           );
         })}
