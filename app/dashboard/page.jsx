@@ -905,10 +905,8 @@ function Projects() {
       .catch((err) => setError(String(err)));
   }, []);
 
-  // Filter Bahasa
   const languages = ["All", ...new Set(repos?.map((r) => r.language).filter(Boolean) || [])];
 
-  // Logika Filter & Pinned Sorting
   const filteredRepos = repos
     ?.filter((r) => {
       const matchesSearch =
@@ -918,13 +916,11 @@ function Projects() {
       return matchesSearch && matchesLang;
     })
     ?.sort((a, b) => {
-      // Prioritaskan yang punya liveUrl atau repository pilihan sebagai "Pinned"
       const aPinned = a.isPinned || !!a.liveUrl;
       const bPinned = b.isPinned || !!b.liveUrl;
       return bPinned - aPinned;
     });
 
-  // Statistik Ringkasan
   const totalStars = repos?.reduce((acc, r) => acc + (r.stars || 0), 0) || 0;
   const totalForks = repos?.reduce((acc, r) => acc + (r.forks || 0), 0) || 0;
   const totalLive = repos?.filter((r) => !!r.liveUrl).length || 0;
@@ -933,52 +929,55 @@ function Projects() {
     <div>
       <SectionTitle title="Project GitHub" sub="Repository publik & live project zero-route" />
 
-      {/* 1. STATISTIK RINGKASAN */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 18 }}>
-        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-          <Github size={18} color="#5b8def" />
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3" }}>{repos?.length || 0}</div>
-            <div style={{ fontSize: 10.5, color: "#7d8199" }}>Total Repos</div>
+      {/* 1. STATISTIK RINGKASAN: Terkunci 2x2 di Mobile, 4 Inline di Desktop */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
+        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Github size={18} color="#5b8def" style={{ flexShrink: 0 }} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3", lineHeight: 1.1 }}>{repos?.length || 0}</div>
+            <div style={{ fontSize: 10, color: "#7d8199", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Total Repos</div>
           </div>
         </div>
-        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-          <Globe size={18} color="#4dd6c4" />
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3" }}>{totalLive}</div>
-            <div style={{ fontSize: 10.5, color: "#7d8199" }}>Live Web</div>
+
+        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Globe size={18} color="#4dd6c4" style={{ flexShrink: 0 }} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3", lineHeight: 1.1 }}>{totalLive}</div>
+            <div style={{ fontSize: 10, color: "#7d8199", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Live Web</div>
           </div>
         </div>
-        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-          <Star size={18} color="#facc15" />
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3" }}>{totalStars}</div>
-            <div style={{ fontSize: 10.5, color: "#7d8199" }}>Total Stars</div>
+
+        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Star size={18} color="#facc15" style={{ flexShrink: 0 }} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3", lineHeight: 1.1 }}>{totalStars}</div>
+            <div style={{ fontSize: 10, color: "#7d8199", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Total Stars</div>
           </div>
         </div>
-        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-          <GitFork size={18} color="#c084fc" />
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3" }}>{totalForks}</div>
-            <div style={{ fontSize: 10.5, color: "#7d8199" }}>Total Forks</div>
+
+        <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+          <GitFork size={18} color="#c084fc" style={{ flexShrink: 0 }} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3", lineHeight: 1.1 }}>{totalForks}</div>
+            <div style={{ fontSize: 10, color: "#7d8199", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Total Forks</div>
           </div>
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: 200, display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "8px 12px" }}>
-          <Search size={15} color="#7d8199" />
+      {/* 2. SEARCH & FILTER RINGKAS (HORIZONTALLY SCROLLABLE FILTER) */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px" }}>
+          <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
           <input
             type="text"
             placeholder="Cari project..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 13 }}
+            style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 12.5 }}
           />
         </div>
 
-        <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
           {languages.map((lang) => (
             <button
               key={lang}
@@ -988,12 +987,13 @@ function Projects() {
                 border: "1px solid",
                 borderColor: selectedLang === lang ? "#5b8def" : "#1e2338",
                 color: selectedLang === lang ? "#fff" : "#8b8fa8",
-                borderRadius: 10,
-                padding: "6px 12px",
-                fontSize: 12,
+                borderRadius: 8,
+                padding: "4px 10px",
+                fontSize: 11.5,
                 cursor: "pointer",
                 whiteSpace: "nowrap",
                 fontWeight: 500,
+                flexShrink: 0,
               }}
             >
               {lang}
@@ -1010,12 +1010,12 @@ function Projects() {
 
       {!repos && !error && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data repo...</p>}
 
-      {/* 2. GRID LAYOUT (AUTO FIT 2 KOLOM DI DESKTOP, 1 KOLOM DI MOBILE) */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
+      {/* 3. GRID CARDS (1 KOLOM DI MOBILE KECIL, 2 KOLOM DI TABLET/DESKTOP) */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
         {filteredRepos?.map((r) => {
           const color = langColor(r.language);
           const isLive = !!r.liveUrl;
-          const isPinned = r.isPinned || isLive; // Otomatis tag PINNED untuk repo unggulan/live
+          const isPinned = r.isPinned || isLive;
 
           return (
             <div
@@ -1023,8 +1023,8 @@ function Projects() {
               style={{
                 background: "#12162a",
                 border: isPinned ? "1px solid #2e3859" : "1px solid #1e2338",
-                borderRadius: 16,
-                padding: "16px",
+                borderRadius: 14,
+                padding: "14px",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
@@ -1032,69 +1032,64 @@ function Projects() {
                 overflow: "hidden",
               }}
             >
-              {/* Background Glow */}
               <div
                 style={{
                   position: "absolute",
                   top: 0,
                   right: 0,
-                  width: 120,
-                  height: 120,
+                  width: 100,
+                  height: 100,
                   background: `radial-gradient(circle at top right, ${color}18, transparent 70%)`,
                   pointerEvents: "none",
                 }}
               />
 
               <div>
-                {/* Header Card & 3. PINNED/FEATURED TAG */}
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 6, marginBottom: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Github size={16} color={color} />
+                    <div style={{ width: 28, height: 28, borderRadius: 6, background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Github size={15} color={color} />
                     </div>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <span style={{ fontWeight: 700, fontSize: 13.5, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {r.name}
                     </span>
                   </div>
 
                   <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                     {isPinned && (
-                      <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.4, background: "#c084fc22", color: "#c084fc", padding: "2px 6px", borderRadius: 6, border: "1px solid #c084fc44" }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, background: "#c084fc22", color: "#c084fc", padding: "2px 5px", borderRadius: 4, border: "1px solid #c084fc44" }}>
                         PINNED
                       </span>
                     )}
                     {isLive && (
-                      <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.4, background: "#4dd6c422", color: "#4dd6c4", padding: "2px 6px", borderRadius: 6, border: "1px solid #4dd6c444" }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, background: "#4dd6c422", color: "#4dd6c4", padding: "2px 5px", borderRadius: 4, border: "1px solid #4dd6c444" }}>
                         LIVE
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Deskripsi Project */}
-                <p style={{ fontSize: 12, color: "#8b8fa8", margin: "0 0 14px 0", lineHeight: 1.4, minHeight: 34, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                <p style={{ fontSize: 11.5, color: "#8b8fa8", margin: "0 0 10px 0", lineHeight: 1.35, minHeight: 30, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                   {r.description || "Tidak ada deskripsi tersedia."}
                 </p>
               </div>
 
               <div>
-                {/* Information Metadata */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, color: "#7d8199", marginBottom: 12, paddingTop: 10, borderTop: "1px solid #1a1e33" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10.5, color: "#7d8199", marginBottom: 10, paddingTop: 8, borderTop: "1px solid #1a1e33" }}>
                   {r.language ? (
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
                       {r.language}
                     </span>
                   ) : <span />}
 
-                  <div style={{ display: "flex", gap: 10 }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Star size={11} /> {r.stars}</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}><GitFork size={11} /> {r.forks}</span>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Star size={10} /> {r.stars}</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}><GitFork size={10} /> {r.forks}</span>
                   </div>
                 </div>
 
-                {/* 4. DUAL ACTION BUTTON (REPO & LIVE DEMO) */}
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", gap: 6 }}>
                   <a
                     href={r.url}
                     target="_blank"
@@ -1104,18 +1099,18 @@ function Projects() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      gap: 5,
+                      gap: 4,
                       background: "#1a1e33",
                       border: "1px solid #2a2f4a",
                       color: "#e7e9f3",
-                      padding: "8px 10px",
-                      borderRadius: 8,
-                      fontSize: 11.5,
+                      padding: "6px 8px",
+                      borderRadius: 6,
+                      fontSize: 11,
                       fontWeight: 600,
                       textDecoration: "none",
                     }}
                   >
-                    Repo <ExternalLink size={11} />
+                    Repo <ExternalLink size={10} />
                   </a>
 
                   {isLive ? (
@@ -1128,18 +1123,18 @@ function Projects() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: 5,
+                        gap: 4,
                         background: color,
                         border: "none",
                         color: "#0a0c14",
-                        padding: "8px 10px",
-                        borderRadius: 8,
-                        fontSize: 11.5,
+                        padding: "6px 8px",
+                        borderRadius: 6,
+                        fontSize: 11,
                         fontWeight: 700,
                         textDecoration: "none",
                       }}
                     >
-                      Live Demo <ExternalLink size={11} />
+                      Live Demo <ExternalLink size={10} />
                     </a>
                   ) : (
                     <button
@@ -1149,13 +1144,13 @@ function Projects() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: 5,
+                        gap: 4,
                         background: "#12162a",
                         border: "1px solid #1a1e33",
                         color: "#5b5f78",
-                        padding: "8px 10px",
-                        borderRadius: 8,
-                        fontSize: 11.5,
+                        padding: "6px 8px",
+                        borderRadius: 6,
+                        fontSize: 11,
                         fontWeight: 500,
                         cursor: "not-allowed",
                       }}
@@ -1172,6 +1167,7 @@ function Projects() {
     </div>
   );
 }
+
 
 function PulseMonitor({ alive, label }) {
   return (
