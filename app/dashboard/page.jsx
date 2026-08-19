@@ -914,6 +914,8 @@ const LANG_COLORS = {
   CSS: "#5be0c4",
   Python: "#facc15",
   Go: "#4dd6c4",
+  "C++": "#f34b7d",
+  C: "#555555",
 };
 
 function langColor(lang) {
@@ -1184,6 +1186,27 @@ function Projects() {
                     >
                       Live Demo <ExternalLink size={10} />
                     </a>
+                  ) : r.isPrivate ? (
+                    <button
+                      disabled
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 4,
+                        background: "#c084fc22",
+                        border: "1px solid #c084fc66",
+                        color: "#c084fc",
+                        padding: "6px 8px",
+                        borderRadius: 6,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: "default",
+                      }}
+                    >
+                      Repo Private
+                    </button>
                   ) : (
                     <button
                       disabled
