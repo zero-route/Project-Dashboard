@@ -1305,6 +1305,7 @@ function InfoRow({ icon: Icon, label, value, copyable }) {
 function VercelProject() {
   const [data, setData] = useState(null);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
   const [expandedProjects, setExpandedProjects] = useState({});
 
   useEffect(() => {
@@ -1321,15 +1322,20 @@ function VercelProject() {
   const projects = data?.projects || [];
   const readyCount = projects.filter((p) => p.status === "READY").length;
 
-  const filteredProjects = projects.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProjects = projects.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchesFilter =
+      filter === "All" ||
+      (filter === "READY" && p.status === "READY") ||
+      (filter === "Live" && !!p.url);
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div>
       <SectionTitle title="Project Vercel" sub="Monitoring deployment, status domain, & usage" />
 
-      {/* 1. VERCEL SYSTEM HEALTH INDICATOR */}
+      {/* 1. SYSTEM HEALTH & USAGE */}
       <div
         style={{
           background: "#12162a",
@@ -1365,7 +1371,6 @@ function VercelProject() {
         <span style={{ fontSize: 11, color: "#7d8199" }}>All Edge & Serverless Regions Operational</span>
       </div>
 
-      {/* 2. HOBBY PLAN TRACKER (USAGE QUOTA) */}
       <Card style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>Hobby Plan Usage</span>
@@ -1396,22 +1401,47 @@ function VercelProject() {
         </div>
       </Card>
 
-      {/* 3. MINI STATS & SEARCH BAR */}
+      {/* 2. MINI STATS */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 14 }}>
         <MiniStat icon={Zap} tint="#5b8def" label="Total Project" value={data?.configured ? projects.length : "-"} />
         <MiniStat icon={CircleCheck} tint="#4dd6c4" label="Status Live" value={data?.configured ? readyCount : "-"} />
         <MiniStat icon={Globe} tint="#c084fc" label="Domain Aktif" value={data?.configured ? projects.filter((p) => !!p.url).length : "-"} />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px", marginBottom: 16 }}>
-        <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
-        <input
-          type="text"
-          placeholder="Cari project Vercel..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 12.5 }}
-        />
+      {/* 3. SEARCH & FILTER CHIPS */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px" }}>
+          <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
+          <input
+            type="text"
+            placeholder="Cari project Vercel..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 12.5 }}
+          />
+        </div>
+
+        <div style={{ display: "flex", gap: 6 }}>
+          {["All", "READY", "Live"].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              style={{
+                background: filter === f ? "#5b8def" : "#12162a",
+                border: "1px solid",
+                borderColor: filter === f ? "#5b8def" : "#1e2338",
+                color: filter === f ? "#fff" : "#8b8fa8",
+                borderRadius: 8,
+                padding: "4px 12px",
+                fontSize: 11.5,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {f === "READY" ? "Status Ready" : f === "Live" ? "Domain Live" : "Semua Project"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {!data && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data Vercel...</p>}
@@ -1419,90 +1449,150 @@ function VercelProject() {
         <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{data.message}</p></Card>
       )}
 
-      {/* 4. GRID PROJECT & COLLAPSIBLE DEPLOYMENTS */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: 14,
-          alignItems: "start",
-        }}
-      >
+      {/* 4. GRID CARDS WITH GLOW & RICH DETAILS */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14, alignItems: "start" }}>
         {filteredProjects.map((p) => {
           const isReady = p.status === "READY";
           const isExpanded = !!expandedProjects[p.id];
+          const latestDeploy = p.deployments?.[0];
 
           return (
-            <Card key={p.id} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div
+              key={p.id}
+              style={{
+                background: "#12162a",
+                border: "1px solid #1e2338",
+                borderRadius: 16,
+                padding: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              {/* RADIAL GLOW BACKGROUND */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  width: 120,
+                  height: 120,
+                  background: `radial-gradient(circle at top right, #5b8def22, transparent 70%)`,
+                  pointerEvents: "none",
+                }}
+              />
+
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: "#1a1e33", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Zap size={15} color="#5b8def" />
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: "#5b8def18", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Zap size={16} color="#5b8def" />
                     </div>
-                    <span style={{ fontWeight: 700, fontSize: 13.5, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {p.name}
                     </span>
                   </div>
-                  <span style={{
-                    fontSize: 9.5, fontWeight: 700, padding: "2px 7px", borderRadius: 10, flexShrink: 0,
-                    background: isReady ? "#4dd6c422" : "#ff8a9b22",
-                    color: isReady ? "#4dd6c4" : "#ff8a9b",
-                    border: `1px solid ${isReady ? "#4dd6c444" : "#ff8a9b44"}`
-                  }}>
-                    {p.status}
-                  </span>
+
+                  <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, background: "#c084fc22", color: "#c084fc", padding: "2px 6px", borderRadius: 4, border: "1px solid #c084fc44" }}>
+                      PROD
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        padding: "2px 6px",
+                        borderRadius: 4,
+                        background: isReady ? "#4dd6c422" : "#ff8a9b22",
+                        color: isReady ? "#4dd6c4" : "#ff8a9b",
+                        border: `1px solid ${isReady ? "#4dd6c444" : "#ff8a9b44"}`,
+                      }}
+                    >
+                      {p.status}
+                    </span>
+                  </div>
                 </div>
 
-                <div style={{ fontSize: 11, color: "#7d8199", marginBottom: 4 }}>
-                  Framework: <span style={{ color: "#a7abc2", fontWeight: 600 }}>{p.framework.toUpperCase()}</span>
+                <div style={{ fontSize: 11, color: "#8b8fa8", marginBottom: 6 }}>
+                  Framework: <span style={{ color: "#4dd6c4", fontWeight: 700 }}>{p.framework.toUpperCase()}</span>
                 </div>
-                <div style={{ fontSize: 11, color: "#7d8199" }}>
-                  Updated: {new Date(p.updatedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                </div>
+
+                {latestDeploy && (
+                  <div style={{ background: "#0e1120", border: "1px solid #1a1e33", borderRadius: 8, padding: "8px 10px", marginTop: 8 }}>
+                    <div style={{ fontSize: 10, color: "#7d8199", marginBottom: 2 }}>Commit Terakhir:</div>
+                    <div style={{ fontSize: 11, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {latestDeploy.commitMessage}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div style={{ display: "flex", gap: 6 }}>
-                {p.url ? (
-                  <a
-                    href={p.url}
-                    target="_blank"
-                    rel="noreferrer"
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10.5, color: "#7d8199", marginBottom: 10, paddingTop: 8, borderTop: "1px solid #1a1e33" }}>
+                  <span>Updated: {new Date(p.updatedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}</span>
+                  <span>Branch: <strong style={{ color: "#a7abc2" }}>{latestDeploy?.branch || "main"}</strong></span>
+                </div>
+
+                <div style={{ display: "flex", gap: 6 }}>
+                  {p.url ? (
+                    <a
+                      href={p.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 4,
+                        background: "#5b8def",
+                        color: "#fff",
+                        padding: "7px 10px",
+                        borderRadius: 8,
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        textDecoration: "none",
+                      }}
+                    >
+                      Kunjungi Web <ExternalLink size={12} />
+                    </a>
+                  ) : (
+                    <button disabled style={{ flex: 1, background: "#1a1e33", border: "none", color: "#5b5f78", padding: "7px 10px", borderRadius: 8, fontSize: 11.5 }}>
+                      No Domain
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => toggleExpand(p.id)}
                     style={{
-                      flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
-                      background: "#5b8def", color: "#fff", padding: "7px 10px", borderRadius: 8,
-                      fontSize: 11.5, fontWeight: 600, textDecoration: "none"
+                      background: "#1a1e33",
+                      border: "1px solid #2a2f4a",
+                      color: "#e7e9f3",
+                      padding: "7px 10px",
+                      borderRadius: 8,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
                     }}
                   >
-                    Kunjungi Web <ExternalLink size={12} />
-                  </a>
-                ) : (
-                  <button disabled style={{ flex: 1, background: "#1a1e33", border: "none", color: "#5b5f78", padding: "7px 10px", borderRadius: 8, fontSize: 11.5 }}>
-                    No Domain
+                    History <ChevronDown size={14} style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
                   </button>
-                )}
-
-                {/* TOMBOL SLIDE DEPLOYMENT HISTORY */}
-                <button
-                  onClick={() => toggleExpand(p.id)}
-                  style={{
-                    background: "#1a1e33", border: "1px solid #2a2f4a", color: "#e7e9f3",
-                    padding: "7px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-                    cursor: "pointer", display: "flex", alignItems: "center", gap: 4
-                  }}
-                >
-                  History <ChevronDown size={14} style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
-                </button>
+                </div>
               </div>
 
-              {/* ACCORDION SLIDE RIWAYAT DEPLOYMENT (MAX 5) DENGAN ANIMASI HALUS */}
+              {/* ACCORDION SLIDE RIWAYAT DEPLOYMENT */}
               <div
                 style={{
                   maxHeight: isExpanded ? "400px" : "0px",
                   opacity: isExpanded ? 1 : 0,
                   overflow: "hidden",
                   transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                  marginTop: isExpanded ? 8 : 0,
+                  marginTop: isExpanded ? 4 : 0,
                   paddingTop: isExpanded ? 10 : 0,
                   borderTop: isExpanded ? "1px solid #1e2338" : "1px solid transparent",
                   display: "flex",
@@ -1530,14 +1620,11 @@ function VercelProject() {
                       <div style={{ fontSize: 11, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {d.commitMessage}
                       </div>
-                      <div style={{ fontSize: 9.5, color: "#7d8199", marginTop: 2 }}>
-                        Branch: <span style={{ color: "#a7abc2" }}>{d.branch}</span>
-                      </div>
                     </div>
                   ))
                 )}
               </div>
-            </Card>
+            </div>
           );
         })}
       </div>
