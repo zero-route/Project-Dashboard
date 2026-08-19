@@ -933,27 +933,24 @@ function DbRow({ icon: Icon, name, ok, detail }) {
 }
 
 const LANG_COLORS = {
-  JSX: "#f0db4f",
-  TSX: "#5b8def",
+  JSX: "#61dafb",        // Warna React Cyan (Biru Cerah)
+  TSX: "#3178c6",        // Warna TypeScript Biru
   React: "#61dafb",
-  JavaScript: "#f0db4f",
-  TypeScript: "#5b8def",
+  JavaScript: "#f0db4f", // Warna JS Kuning
+  TypeScript: "#3178c6",
   HTML: "#ff8a5b",
   CSS: "#5be0c4",
   Python: "#facc15",
   Go: "#4dd6c4",
 };
 
-function langColor(lang) {
-  return LANG_COLORS[lang] || "#8b8fa8";
-}
-
 function getCustomLanguageLabel(repo) {
   const lang = repo.language;
   const name = repo.name.toLowerCase();
 
+  // Hanya repo spesifik yang memang React/NextJS yang diubah jadi JSX/TSX
   if (lang === "JavaScript") {
-    if (name.includes("dashboard") || name.includes("react") || name.includes("web") || name.includes("dex") || name.includes("vault")) {
+    if (name.includes("dashboard") || name.includes("react")) {
       return "JSX";
     }
   }
@@ -963,8 +960,10 @@ function getCustomLanguageLabel(repo) {
     }
   }
 
+  // Repo murni JS (seperti esp32-dex & vault), HTML, CSS tetap sesuai bawaan
   return lang || "Unknown";
 }
+
 
 function Projects() {
   const [repos, setRepos] = useState(null);
@@ -1102,7 +1101,7 @@ function Projects() {
                 padding: "14px",
                 display: "flex",
                 flexDirection: "column",
-                justifycontent: "space-between",
+                justifycontent"space-between",
                 position: "relative",
                 overflow: "hidden",
               }}
