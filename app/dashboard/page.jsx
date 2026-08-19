@@ -711,6 +711,9 @@ function WorldClockMini() {
   );
 }
 
+const FIXED_LAT = -6.2088;
+const FIXED_LON = 106.8456;
+
 function useWeather() {
   const [weather, setWeather] = useState(null);
   const [error, setError] = useState(null);
@@ -723,15 +726,7 @@ function useWeather() {
         .catch(() => setError("Gagal memuat cuaca"));
     };
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
-        () => fetchWeather(-6.2088, 106.8456), // fallback: Jakarta
-        { timeout: 5000 }
-      );
-    } else {
-      fetchWeather(-6.2088, 106.8456);
-    }
+    fetchWeather(FIXED_LAT, FIXED_LON);
   }, []);
 
   return { weather, error };
