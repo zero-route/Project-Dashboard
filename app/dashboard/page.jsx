@@ -5,6 +5,7 @@ import {
   Github, ExternalLink, Star, GitFork, Clock, AlertTriangle,
   Activity, Zap, Database, Cloud, CircleCheck, Menu, Music2, Bot,
   Globe, Radio, Copy, Search, SkipBack, SkipForward, Pause, Play, ChevronDown,
+  Send, Sparkles,
 } from "lucide-react";
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -13,6 +14,8 @@ import {
 } from "recharts";
 
 const PIE_COLORS = ["#c084fc", "#5b8def", "#4dd6c4", "#ff8a5b", "#f472b6", "#facc15"];
+
+const GEMINI_CHAT_API = "https://gemini-chat-bot.iostream911.workers.dev/";
 
 const YT_SEARCH_API = "https://yt-music-portofolio.iostream911.workers.dev/";
 
@@ -296,11 +299,140 @@ function MusicPlayerUI({ music }) {
   );
 }
 
+ function useChatBot() {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { role: "model", text: "Hai, aku Astrea. Ada yang bisa dibantu seputar Dimas atau portofolio ini?" },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const scrollRef = useRef(null);
 
-export default function DashboardPage() {
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, loading, open]);
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+
+    const history = messages.map((m) => ({ role: m.role, parts: [{ text: m.text }] }));
+    setMessages((prev) => [...prev, { role: "user", text }]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(GEMINI_CHAT_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history }),
+      });
+      const json = await res.json();
+      setMessages((prev) => [...prev, { role: "model", text: json.reply || "Maaf, aku tidak bisa merespons sekarang." }]);
+    } catch (e) {
+      setMessages((prev) => [...prev, { role: "model", text: "Maaf, koneksi ke server sedang bermasalah." }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { open, setOpen, messages, input, setInput, send, loading, scrollRef };
+}
+
+function ChatBotUI({ chat }) {
+  const { open, setOpen, messages, input, setInput, send, loading, scrollRef } = chat;
+  if (!open) return null;
+
+  return (
+    <div
+      onClick={() => setOpen(false)}
+      style={{
+        position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)",
+        zIndex: 220, display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%", maxWidth: 420, height: "min(600px, 82vh)", background: "#0a0c14",
+          border: "1px solid #1e2338", borderRadius: 24, boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
+          display: "flex", flexDirection: "column", overflow: "hidden",
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderBottom: "1px solid #1e2338" }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg,#5b8def,#c084fc)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            <Sparkles size={16} color="#fff" />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: "#e7e9f3" }}>Astrea</div>
+            <div style={{ fontSize: 10.5, color: "#7d8199" }}>AI Assistant Portofolio</div>
+          </div>
+          <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#e7e9f3", cursor: "pointer", display: "flex" }}>
+            <ChevronDown size={22} />
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "14px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+          {messages.map((m, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+              <div style={{
+                maxWidth: "80%", padding: "9px 13px", borderRadius: 16,
+                borderBottomRightRadius: m.role === "user" ? 4 : 16,
+                borderBottomLeftRadius: m.role === "user" ? 16 : 4,
+                background: m.role === "user" ? "linear-gradient(135deg,#5b8def,#7c5cf0)" : "#12162a",
+                border: m.role === "user" ? "none" : "1px solid #1e2338",
+                color: "#e7e9f3", fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-wrap",
+              }}>
+                {m.text}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <div style={{ padding: "9px 13px", borderRadius: 16, background: "#12162a", border: "1px solid #1e2338", color: "#7d8199", fontSize: 13 }}>
+                Astrea sedang mengetik...
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", borderTop: "1px solid #1e2338" }}>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && send()}
+            placeholder="Tulis pesan..."
+            style={{ flex: 1, background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "10px 14px", color: "#e7e9f3", fontSize: 13, outline: "none" }}
+          />
+          <button
+            onClick={send}
+            disabled={loading || !input.trim()}
+            style={{
+              width: 38, height: 38, borderRadius: 12, border: "none",
+              background: input.trim() ? "linear-gradient(135deg,#5b8def,#c084fc)" : "#1a1e33",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: input.trim() ? "pointer" : "default", flexShrink: 0,
+            }}
+          >
+            <Send size={16} color={input.trim() ? "#fff" : "#7d8199"} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ export default function DashboardPage() {
   const [tab, setTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const music = useMusicPlayer();
+  const chat = useChatBot();
 
   return (
     <div className="layout">
@@ -311,12 +443,13 @@ export default function DashboardPage() {
             <Menu size={18} />
           </button>
         </div>
-        {tab === "overview" && <Overview onOpenMusic={music.openSearch} />}
+        {tab === "overview" && <Overview onOpenMusic={music.openSearch} onOpenChat={() => chat.setOpen(true)} />}
         {tab === "projects" && <Projects />}
         {tab === "vercel" && <VercelProject />}
         {tab === "database" && <DatabasePanel />}
       </main>
       <MusicPlayerUI music={music} />
+      <ChatBotUI chat={chat} />
     </div>
   );
 }
@@ -489,7 +622,7 @@ function useApiLatency() {
 }
 
 // ---------- OVERVIEW ----------
-function Overview({ onOpenMusic }) {
+function Overview({ onOpenMusic, onOpenChat }) {
   const [gh, setGh] = useState(null);
   const [vc, setVc] = useState(null);
   const [sb, setSb] = useState(null);
@@ -541,11 +674,13 @@ function Overview({ onOpenMusic }) {
         </div>
 
         <div className="hero-icons">
-          <button onClick={onOpenMusic} style={{ all: "unset", cursor: "pointer", flex: 1 }}>
-            <IconStatCard icon={Music2} label="Music" tint="#f472b6" note="Cari & putar lagu" />
-          </button>
-          <IconStatCard icon={Bot} label="Assistant" tint="#5b8def" note="Segera hadir: Lily asisten" />
-        </div>
+  <button onClick={onOpenMusic} style={{ all: "unset", cursor: "pointer", flex: 1 }}>
+    <IconStatCard icon={Music2} label="Music" tint="#f472b6" note="Cari & putar lagu" />
+  </button>
+  <button onClick={onOpenChat} style={{ all: "unset", cursor: "pointer", flex: 1 }}>
+    <IconStatCard icon={Bot} label="Assistant" tint="#5b8def" note="Chat dengan Astrea" />
+  </button>
+</div>
 
         <div className="hero-calendar">
           <div style={{
