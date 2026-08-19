@@ -1420,9 +1420,14 @@ function VercelProject() {
       )}
 
       {/* 4. GRID PROJECT & COLLAPSIBLE DEPLOYMENTS */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14,
-        alignItems: "start",
-      }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: 14,
+          alignItems: "start",
+        }}
+      >
         {filteredProjects.map((p) => {
           const isReady = p.status === "READY";
           const isExpanded = !!expandedProjects[p.id];
@@ -1490,43 +1495,48 @@ function VercelProject() {
                 </button>
               </div>
 
-              {/* ACCORDION SLIDE RIWAYAT DEPLOYMENT (MAX 5) */}
-              {isExpanded && (
-                <div style={{ marginTop: 8, paddingTop: 10, borderTop: "1px solid #1e2338", display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, color: "#7d8199", letterSpacing: 0.5 }}>
-                    5 DEPLOYMENT TERAKHIR
-                  </div>
-
-                  {p.deployments?.length === 0 ? (
-                    <div style={{ fontSize: 11, color: "#7d8199" }}>Belum ada riwayat deployment.</div>
-                  ) : (
-                    p.deployments?.map((d) => (
-                      <div key={d.id} style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 8, padding: "8px 10px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: d.state === "READY" ? "#4dd6c4" : "#ff8a9b" }}>
-                            {d.state}
-                          </span>
-                          <span style={{ fontSize: 9.5, color: "#7d8199" }}>
-                            {new Date(d.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 11, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {d.commitMessage}
-                        </div>
-                        <div style={{ fontSize: 9.5, color: "#7d8199", marginTop: 2 }}>
-                          Branch: <span style={{ color: "#a7abc2" }}>{d.branch}</span>
-                        </div>
-                      </div>
-                    ))
-                  )}
+              {/* ACCORDION SLIDE RIWAYAT DEPLOYMENT (MAX 5) DENGAN ANIMASI HALUS */}
+              <div
+                style={{
+                  maxHeight: isExpanded ? "400px" : "0px",
+                  opacity: isExpanded ? 1 : 0,
+                  overflow: "hidden",
+                  transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                  marginTop: isExpanded ? 8 : 0,
+                  paddingTop: isExpanded ? 10 : 0,
+                  borderTop: isExpanded ? "1px solid #1e2338" : "1px solid transparent",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#7d8199", letterSpacing: 0.5 }}>
+                  5 DEPLOYMENT TERAKHIR
                 </div>
-              )}
-            </Card>
-          );
-        })}
-      </div>
 
-              )}
+                {p.deployments?.length === 0 ? (
+                  <div style={{ fontSize: 11, color: "#7d8199" }}>Belum ada riwayat deployment.</div>
+                ) : (
+                  p.deployments?.map((d) => (
+                    <div key={d.id} style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 8, padding: "8px 10px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: d.state === "READY" ? "#4dd6c4" : "#ff8a9b" }}>
+                          {d.state}
+                        </span>
+                        <span style={{ fontSize: 9.5, color: "#7d8199" }}>
+                          {new Date(d.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {d.commitMessage}
+                      </div>
+                      <div style={{ fontSize: 9.5, color: "#7d8199", marginTop: 2 }}>
+                        Branch: <span style={{ color: "#a7abc2" }}>{d.branch}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </Card>
           );
         })}
