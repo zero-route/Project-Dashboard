@@ -424,35 +424,6 @@ function ChatBotUI({ chat }) {
   );
 }
 
-export default function DashboardPage() {
-  const [tab, setTab] = useState("overview");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const music = useMusicPlayer();
-  const chat = useChatBot();
-
-  return (
-    <div className="layout" style={{ position: "relative", minHeight: "100vh" }}>
-      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} tab={tab} setTab={setTab} />
-
-      <main className="main" style={{ paddingBottom: music.view === "mini" ? 70 : 0 }}>
-        <div className="topbar">
-          <button className="toggle-btn" onClick={() => setSidebarOpen((o) => !o)}>
-            <Menu size={18} />
-          </button>
-        </div>
-        {tab === "overview" && <Overview onOpenMusic={music.openSearch} onOpenChat={() => chat.setOpen(true)} />}
-        {tab === "projects" && <Projects />}
-        {tab === "vercel" && <VercelProject />}
-        {tab === "database" && <DatabasePanel />}
-      </main>
-
-      <MusicPlayerUI music={music} />
-      <ChatBotUI chat={chat} />
-    </div>
-  );
-}
-
-
 function Sidebar({ open, setOpen, tab, setTab }) {
   const items = [
     { id: "overview", label: "Ringkasan", icon: Activity },
@@ -934,10 +905,10 @@ function DbRow({ icon: Icon, name, ok, detail }) {
 }
 
 const LANG_COLORS = {
-  JSX: "#61dafb",        // Warna React Cyan (Biru Cerah)
-  TSX: "#3178c6",        // Warna TypeScript Biru
+  JSX: "#61dafb",        
+  TSX: "#3178c6",        
   React: "#61dafb",
-  JavaScript: "#f0db4f", // Warna JS Kuning
+  JavaScript: "#f0db4f", 
   TypeScript: "#3178c6",
   HTML: "#ff8a5b",
   CSS: "#5be0c4",
@@ -945,8 +916,12 @@ const LANG_COLORS = {
   Go: "#4dd6c4",
 };
 
+function langColor(lang) {
+  return LANG_COLORS[lang] || "#8b8fa8";
+}
+
 function getCustomLanguageLabel(repo) {
-  if (!repo) return "Unknown"; // Tambahan pengaman
+  if (!repo) return "Unknown";
   const lang = repo.language;
   const name = repo.name?.toLowerCase() || "";
 
@@ -1470,5 +1445,33 @@ function MiniStat({ icon: Icon, tint, label, value }) {
       <div style={{ fontSize: 20, fontWeight: 700 }}>{value}</div>
       <div style={{ fontSize: 11, color: "#7d8199", marginTop: 2 }}>{label}</div>
     </Card>
+  );
+}
+
+export default function DashboardPage() {
+  const [tab, setTab] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const music = useMusicPlayer();
+  const chat = useChatBot();
+
+  return (
+    <div className="layout" style={{ position: "relative", minHeight: "100vh" }}>
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} tab={tab} setTab={setTab} />
+
+      <main className="main" style={{ paddingBottom: music.view === "mini" ? 70 : 0 }}>
+        <div className="topbar">
+          <button className="toggle-btn" onClick={() => setSidebarOpen((o) => !o)}>
+            <Menu size={18} />
+          </button>
+        </div>
+        {tab === "overview" && <Overview onOpenMusic={music.openSearch} onOpenChat={() => chat.setOpen(true)} />}
+        {tab === "projects" && <Projects />}
+        {tab === "vercel" && <VercelProject />}
+        {tab === "database" && <DatabasePanel />}
+      </main>
+
+      <MusicPlayerUI music={music} />
+      <ChatBotUI chat={chat} />
+    </div>
   );
 }
