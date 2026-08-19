@@ -1101,7 +1101,7 @@ function Projects() {
                 padding: "14px",
                 display: "flex",
                 flexDirection: "column",
-                justifycontent"space-between",
+                justifyContent: "space-between",
                 position: "relative",
                 overflow: "hidden",
               }}
