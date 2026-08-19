@@ -6,6 +6,7 @@ import {
   Activity, Zap, Database, Cloud, CircleCheck, Menu, Music2, Bot,
   Globe, Radio, Copy, Search, SkipBack, SkipForward, Pause, Play, ChevronDown,
   Send, Sparkles,
+  Sun, CloudRain, CloudSnow, CloudLightning, Wind, Droplets,
 } from "lucide-react";
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -710,6 +711,114 @@ function WorldClockMini() {
   );
 }
 
+function useWeather() {
+  const [weather, setWeather] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchWeather = (lat, lon) => {
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=auto`)
+        .then((r) => r.json())
+        .then((json) => setWeather(json.current))
+        .catch(() => setError("Gagal memuat cuaca"));
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+        () => fetchWeather(-6.2088, 106.8456), // fallback: Jakarta
+        { timeout: 5000 }
+      );
+    } else {
+      fetchWeather(-6.2088, 106.8456);
+    }
+  }, []);
+
+  return { weather, error };
+}
+
+function weatherInfo(code) {
+  const map = {
+    0: { label: "Cerah", icon: Sun, color: "#facc15" },
+    1: { label: "Cerah Berawan", icon: Sun, color: "#facc15" },
+    2: { label: "Berawan Sebagian", icon: Cloud, color: "#a7abc2" },
+    3: { label: "Mendung", icon: Cloud, color: "#7d8199" },
+    45: { label: "Berkabut", icon: Cloud, color: "#7d8199" },
+    48: { label: "Berkabut", icon: Cloud, color: "#7d8199" },
+    51: { label: "Gerimis Ringan", icon: CloudRain, color: "#5b8def" },
+    53: { label: "Gerimis", icon: CloudRain, color: "#5b8def" },
+    55: { label: "Gerimis Lebat", icon: CloudRain, color: "#5b8def" },
+    61: { label: "Hujan Ringan", icon: CloudRain, color: "#5b8def" },
+    63: { label: "Hujan", icon: CloudRain, color: "#5b8def" },
+    65: { label: "Hujan Lebat", icon: CloudRain, color: "#5b8def" },
+    71: { label: "Salju Ringan", icon: CloudSnow, color: "#c7d2fe" },
+    73: { label: "Salju", icon: CloudSnow, color: "#c7d2fe" },
+    75: { label: "Salju Lebat", icon: CloudSnow, color: "#c7d2fe" },
+    80: { label: "Hujan Deras", icon: CloudRain, color: "#5b8def" },
+    95: { label: "Badai Petir", icon: CloudLightning, color: "#facc15" },
+  };
+  return map[code] || { label: "Tidak diketahui", icon: Cloud, color: "#7d8199" };
+}
+
+function WeatherWidget() {
+  const { weather, error } = useWeather();
+
+  if (error) {
+    return (
+      <Card>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Cuaca</div>
+        <div style={{ fontSize: 12, color: "#7d8199" }}>{error}</div>
+      </Card>
+    );
+  }
+
+  if (!weather) {
+    return (
+      <Card>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Cuaca</div>
+        <div style={{ fontSize: 12, color: "#7d8199" }}>Memuat cuaca...</div>
+      </Card>
+    );
+  }
+
+  const info = weatherInfo(weather.weather_code);
+  const Icon = info.icon;
+
+  return (
+    <Card>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 600 }}>Cuaca</div>
+        <span style={{ fontSize: 10.5, color: "#7d8199" }}>{info.label}</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: `${info.color}22`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon size={24} color={info.color} />
+        </div>
+        <div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: "#e7e9f3", lineHeight: 1 }}>{Math.round(weather.temperature_2m)}°C</div>
+          <div style={{ fontSize: 11, color: "#7d8199", marginTop: 3 }}>Terasa {Math.round(weather.apparent_temperature)}°C</div>
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 10, padding: "8px 10px", display: "flex", alignItems: "center", gap: 8 }}>
+          <Droplets size={14} color="#5b8def" />
+          <div>
+            <div style={{ fontSize: 10.5, color: "#7d8199" }}>Kelembapan</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>{weather.relative_humidity_2m}%</div>
+          </div>
+        </div>
+        <div style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 10, padding: "8px 10px", display: "flex", alignItems: "center", gap: 8 }}>
+          <Wind size={14} color="#4dd6c4" />
+          <div>
+            <div style={{ fontSize: 10.5, color: "#7d8199" }}>Angin</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>{Math.round(weather.wind_speed_10m)} km/j</div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
   const donutSupabase = latencyDonut("Latency Supabase", latency.supabase);
   const donutVercel = latencyDonut("Latency Vercel", latency.vercel);
   const donutCloudflare = latencyDonut("Latency Cloudflare", latency.cloudflare);
@@ -752,8 +861,10 @@ function WorldClockMini() {
             )}
           </div>
         </div>
-        <div className="grid-2" style={{ marginBottom: 14 }}>
-        <WorldClockMini />
+<div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, marginBottom: 14 }}>
+  <WorldClockMini />
+  <WeatherWidget />
+</div>
       </div>
       </div>
 
