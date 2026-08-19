@@ -682,6 +682,7 @@ function Overview({ onOpenMusic, onOpenChat }) {
   }, []);
 
   return history;
+}
 
 function WorldClockMini() {
   const now = useClock();
