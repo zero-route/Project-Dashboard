@@ -682,34 +682,6 @@ function Overview({ onOpenMusic, onOpenChat }) {
   }, []);
 
   return history;
-}
-
-function UptimeMini() {
-  const history = useUptimeHistory();
-  const total = history.length;
-  const okCount = history.filter((h) => h.ok).length;
-  const pct = total > 0 ? Math.round((okCount / total) * 100) : null;
-  const pctColor = pct == null ? "#7d8199" : pct >= 95 ? "#4dd6c4" : pct >= 80 ? "#facc15" : "#f4527a";
-
-  return (
-    <Card>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 600 }}>Uptime Vercel</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: pctColor }}>{pct == null ? "-" : `${pct}%`}</div>
-      </div>
-      <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end" }}>
-        {Array.from({ length: 30 }).map((_, i) => {
-          const entry = history[history.length - 30 + i];
-          const color = !entry ? "#1a1e33" : entry.ok ? "#4dd6c4" : "#f4527a";
-          return <div key={i} style={{ flex: 1, height: "100%", borderRadius: 3, background: color }} />;
-        })}
-      </div>
-      <div style={{ fontSize: 10.5, color: "#7d8199", marginTop: 8 }}>
-        {total > 0 ? `${total} pengecekan terakhir` : "Mengumpulkan data..."}
-      </div>
-    </Card>
-  );
-}
 
 function WorldClockMini() {
   const now = useClock();
@@ -780,7 +752,6 @@ function WorldClockMini() {
           </div>
         </div>
         <div className="grid-2" style={{ marginBottom: 14 }}>
-        <UptimeMini />
         <WorldClockMini />
       </div>
       </div>
