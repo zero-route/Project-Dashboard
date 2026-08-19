@@ -302,7 +302,7 @@ function MusicPlayerUI({ music }) {
  function useChatBot() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "model", text: "Hai, aku Astrea. Ada yang bisa dibantu seputar Dimas atau portofolio ini?" },
+    { role: "model", text: "Hai, aku Astrea. perlu check apa di dashboard ini?" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
