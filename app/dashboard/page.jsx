@@ -656,6 +656,86 @@ function Overview({ onOpenMusic, onOpenChat }) {
       ],
     };
   };
+  
+  function useUptimeHistory() {
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    let stored = [];
+    try {
+      stored = JSON.parse(localStorage.getItem("uptime_history") || "[]");
+    } catch (e) {}
+
+    fetch("/api/vercel/project")
+      .then((r) => r.json())
+      .then((vc) => {
+        const ok = !!vc?.configured && (vc.status || "").toLowerCase().includes("ready");
+        const updated = [...stored, { time: Date.now(), ok }].slice(-30);
+        try { localStorage.setItem("uptime_history", JSON.stringify(updated)); } catch (e) {}
+        setHistory(updated);
+      })
+      .catch(() => {
+        const updated = [...stored, { time: Date.now(), ok: false }].slice(-30);
+        try { localStorage.setItem("uptime_history", JSON.stringify(updated)); } catch (e) {}
+        setHistory(updated);
+      });
+  }, []);
+
+  return history;
+}
+
+function UptimeMini() {
+  const history = useUptimeHistory();
+  const total = history.length;
+  const okCount = history.filter((h) => h.ok).length;
+  const pct = total > 0 ? Math.round((okCount / total) * 100) : null;
+  const pctColor = pct == null ? "#7d8199" : pct >= 95 ? "#4dd6c4" : pct >= 80 ? "#facc15" : "#f4527a";
+
+  return (
+    <Card>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 600 }}>Uptime Vercel</div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: pctColor }}>{pct == null ? "-" : `${pct}%`}</div>
+      </div>
+      <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end" }}>
+        {Array.from({ length: 30 }).map((_, i) => {
+          const entry = history[history.length - 30 + i];
+          const color = !entry ? "#1a1e33" : entry.ok ? "#4dd6c4" : "#f4527a";
+          return <div key={i} style={{ flex: 1, height: "100%", borderRadius: 3, background: color }} />;
+        })}
+      </div>
+      <div style={{ fontSize: 10.5, color: "#7d8199", marginTop: 8 }}>
+        {total > 0 ? `${total} pengecekan terakhir` : "Mengumpulkan data..."}
+      </div>
+    </Card>
+  );
+}
+
+function WorldClockMini() {
+  const now = useClock();
+  const zones = [
+    { label: "WIB", tz: "Asia/Jakarta" },
+    { label: "London", tz: "Europe/London" },
+    { label: "Tokyo", tz: "Asia/Tokyo" },
+    { label: "New York", tz: "America/New_York" },
+  ];
+
+  return (
+    <Card>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Jam Dunia</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {zones.map((z) => (
+          <div key={z.tz} style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 10, padding: "8px 10px" }}>
+            <div style={{ fontSize: 10.5, color: "#7d8199" }}>{z.label}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e7e9f3", marginTop: 2 }}>
+              {now ? now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: z.tz }) : "--:--"}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
 
   const donutSupabase = latencyDonut("Latency Supabase", latency.supabase);
   const donutVercel = latencyDonut("Latency Vercel", latency.vercel);
@@ -699,6 +779,10 @@ function Overview({ onOpenMusic, onOpenChat }) {
             )}
           </div>
         </div>
+        <div className="grid-2" style={{ marginBottom: 14 }}>
+        <UptimeMini />
+        <WorldClockMini />
+      </div>
       </div>
 
       <Card style={{ marginBottom: 14 }}>
