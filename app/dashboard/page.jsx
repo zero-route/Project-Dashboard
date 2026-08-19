@@ -1303,55 +1303,94 @@ function InfoRow({ icon: Icon, label, value, copyable }) {
 }
 
 function VercelProject() {
-  const [vc, setVc] = useState(null);
+  const [data, setData] = useState(null);
+
   useEffect(() => {
-    fetch("/api/vercel/project").then(r => r.json()).then(setVc).catch(() => {});
+    fetch("/api/vercel/project")
+      .then((r) => r.json())
+      .then(setData)
+      .catch(() => {});
   }, []);
 
-  const isReady = vc?.configured && (vc.status || "").toLowerCase().includes("ready");
+  const projects = data?.projects || [];
+  const readyCount = projects.filter((p) => p.status === "READY").length;
 
   return (
     <div>
-      <SectionTitle title="DeadmanSwitch — Vercel" sub="Status deployment project" />
+      <SectionTitle title="Project Vercel" sub="Monitoring deployment & status domain Vercel" />
 
-      <div style={{ marginBottom: 14 }}>
-        <PulseMonitor
-          alive={!!vc?.configured}
-          label={vc?.configured ? `Status: ${vc.status || "-"}` : "Menunggu koneksi ke Vercel API..."}
-        />
+      {/* Mini Stats Card */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 16 }}>
+        <MiniStat icon={Zap} tint="#5b8def" label="Total Project" value={data?.configured ? projects.length : "-"} />
+        <MiniStat icon={CircleCheck} tint="#4dd6c4" label="Status Live" value={data?.configured ? readyCount : "-"} />
+        <MiniStat icon={Globe} tint="#c084fc" label="Domain Aktif" value={data?.configured ? projects.filter(p => !!p.url).length : "-"} />
       </div>
 
-      <div className="grid-2" style={{ marginBottom: 14 }}>
-        <GradientCard
-          label="Status"
-          value={vc?.configured ? (vc.status ?? "Live") : "-"}
-          sub="deployment terbaru"
-          from={isReady ? "#4dd6c4" : "#ff8a5b"}
-          to={isReady ? "#2aa198" : "#f4527a"}
-        />
-        <GradientCard
-          label="Domain"
-          value={vc?.url ? "Aktif" : "-"}
-          sub={vc?.url || "Belum ada domain"}
-          from="#c084fc" to="#7c5cf0"
-        />
-      </div>
+      {!data && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data Vercel...</p>}
+      {data && !data.configured && (
+        <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{data.message}</p></Card>
+      )}
 
-      <Card>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Detail Deployment</div>
-        {!vc && <p style={{ color: "#7d8199", fontSize: 13, marginTop: 10 }}>Memuat...</p>}
-        {vc && !vc.configured && <div style={{ fontSize: 13, color: "#7d8199", marginTop: 10 }}>{vc.message}</div>}
-        {vc?.configured && (
-          <>
-            <InfoRow icon={Zap} label="Status deployment" value={vc.status || "-"} />
-            <InfoRow icon={Globe} label="URL" value={vc.url || "-"} copyable />
-            <InfoRow icon={Clock} label="Dibuat" value={vc.createdAt ? new Date(vc.createdAt).toLocaleString("id-ID") : "-"} />
-          </>
-        )}
-      </Card>
+      {/* Grid Project Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+        {projects.map((p) => {
+          const isReady = p.status === "READY";
+          return (
+            <Card key={p.id} style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: "#1a1e33", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Zap size={15} color="#5b8def" />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: 13.5, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {p.name}
+                    </span>
+                  </div>
+                  <span style={{
+                    fontSize: 9.5, fontWeight: 700, padding: "2px 7px", borderRadius: 10, flexShrink: 0,
+                    background: isReady ? "#4dd6c422" : "#ff8a9b22",
+                    color: isReady ? "#4dd6c4" : "#ff8a9b",
+                    border: `1px solid ${isReady ? "#4dd6c444" : "#ff8a9b44"}`
+                  }}>
+                    {p.status}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: 11, color: "#7d8199", marginBottom: 4 }}>
+                  Framework: <span style={{ color: "#a7abc2", fontWeight: 600 }}>{p.framework.toUpperCase()}</span>
+                </div>
+                <div style={{ fontSize: 11, color: "#7d8199" }}>
+                  Updated: {new Date(p.updatedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                </div>
+              </div>
+
+              {p.url ? (
+                <a
+                  href={p.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    background: "#5b8def", color: "#fff", padding: "7px 10px", borderRadius: 8,
+                    fontSize: 11.5, fontWeight: 600, textDecoration: "none", marginTop: 4
+                  }}
+                >
+                  Kunjungi Web <ExternalLink size={12} />
+                </a>
+              ) : (
+                <button disabled style={{ background: "#1a1e33", border: "none", color: "#5b5f78", padding: "7px 10px", borderRadius: 8, fontSize: 11.5 }}>
+                  No Domain
+                </button>
+              )}
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
+
 
 function DatabasePanel() {
   const [sb, setSb] = useState(null);
