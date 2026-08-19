@@ -1,8 +1,4 @@
 // GET /api/github/repos
-// Mengambil daftar repo dari akun GitHub kamu.
-// GITHUB_TOKEN opsional — tanpa token tetap bisa untuk repo publik,
-// tapi rate limit cuma 60 request/jam per IP (dengan token: 5000/jam).
-
 export async function GET() {
   const username = process.env.GITHUB_USERNAME;
   const token = process.env.GITHUB_TOKEN;
@@ -15,17 +11,19 @@ export async function GET() {
   }
 
   try {
-    const res = await fetch(
-      `https://api.github.com/users/${username}/repos?sort=updated&per_page=20`,
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        // cache 5 menit di edge supaya nggak selalu hit rate limit
-        next: { revalidate: 300 },
-      }
-    );
+    // 1. Jika ada GITHUB_TOKEN, gunakan endpoint '/user/repos' agar repo Private juga ikut ketarik.
+    // 2. per_page dinaikkan ke 100 agar semua repo terambil tanpa terpotong.
+    const endpoint = token
+      ? `https://api.github.com/user/repos?sort=updated&per_page=100&affiliation=owner`
+      : `https://api.github.com/users/${username}/repos?sort=updated&per_page=100`;
+
+    const res = await fetch(endpoint, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      next: { revalidate: 300 }, // Cache 5 menit
+    });
 
     if (!res.ok) {
       const body = await res.text();
@@ -37,10 +35,10 @@ export async function GET() {
 
     const data = await res.json();
 
-    // Ambil field yang relevan saja untuk dashboard
     const repos = data.map((r) => {
       const pagesUrl = r.has_pages ? `https://${username}.github.io/${r.name}/` : null;
       const liveUrl = r.homepage?.trim() || pagesUrl || null;
+
       return {
         name: r.name,
         description: r.description,
@@ -53,6 +51,7 @@ export async function GET() {
         openIssues: r.open_issues_count,
         archived: r.archived,
         defaultBranch: r.default_branch,
+        isPrivate: r.private,
       };
     });
 
