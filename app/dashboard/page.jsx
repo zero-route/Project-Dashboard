@@ -426,16 +426,17 @@ function ChatBotUI({ chat }) {
 
 export default function DashboardPage() {
   const [tab, setTab] = useState("overview");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const music = useMusicPlayer();
   const chat = useChatBot();
 
   return (
-    <div className="layout">
-      <Sidebar open={sidebarOpen} tab={tab} setTab={setTab} />
+    <div className="layout" style={{ position: "relative", minHeight: "100vh" }}>
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} tab={tab} setTab={setTab} />
+
       <main className="main" style={{ paddingBottom: music.view === "mini" ? 70 : 0 }}>
         <div className="topbar">
-          <button className="toggle-btn" onClick={() => setSidebarOpen(o => !o)}>
+          <button className="toggle-btn" onClick={() => setSidebarOpen((o) => !o)}>
             <Menu size={18} />
           </button>
         </div>
@@ -444,37 +445,95 @@ export default function DashboardPage() {
         {tab === "vercel" && <VercelProject />}
         {tab === "database" && <DatabasePanel />}
       </main>
+
       <MusicPlayerUI music={music} />
       <ChatBotUI chat={chat} />
     </div>
   );
 }
 
-function Sidebar({ open, tab, setTab }) {
+function Sidebar({ open, setOpen, tab, setTab }) {
   const items = [
     { id: "overview", label: "Ringkasan", icon: Activity },
     { id: "projects", label: "Project GitHub", icon: Github },
     { id: "vercel", label: "Project Vercel", icon: Zap },
     { id: "database", label: "Database", icon: Database },
   ];
+
+  const handleSelectTab = (id) => {
+    setTab(id);
+    setOpen(false);
+  };
+
   return (
-    <aside className={`sidebar ${open ? "" : "closed"}`}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, padding: "0 8px" }}>
-        <div style={{ width: 26, height: 26, borderRadius: 7, background: "linear-gradient(135deg,#5b8def,#c084fc)", flexShrink: 0 }} />
-        <span style={{ fontWeight: 700, fontSize: 14, color: "#e7e9f3" }}>Project Monitoring</span>
-      </div>
-      {items.map(({ id, label, icon: Icon }) => (
-        <button key={id} onClick={() => setTab(id)}
+    <>
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
           style={{
-            display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
-            borderRadius: 10, border: "none", cursor: "pointer", textAlign: "left",
-            background: tab === id ? "#1a1e33" : "transparent",
-            color: tab === id ? "#fff" : "#8b8fa8", fontSize: 13, fontWeight: 500,
-          }}>
-          <Icon size={16} /> {label}
-        </button>
-      ))}
-    </aside>
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            backdropFilter: "blur(2px)",
+            zIndex: 180,
+            transition: "opacity 0.3s ease",
+          }}
+        />
+      )}
+
+      <aside
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: "260px",
+          zIndex: 190,
+          background: "rgba(10, 12, 20, 0.75)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderRight: "1px solid rgba(255, 255, 255, 0.08)",
+          boxShadow: open ? "10px 0 30px rgba(0,0,0,0.5)" : "none",
+          padding: "20px 16px",
+          display: "flex",
+          flexDirection: "column",
+          transform: open ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28, padding: "0 8px" }}>
+          <div style={{ width: 26, height: 26, borderRadius: 7, background: "linear-gradient(135deg,#5b8def,#c084fc)", flexShrink: 0 }} />
+          <span style={{ fontWeight: 700, fontSize: 14, color: "#e7e9f3" }}>Project Monitoring</span>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {items.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => handleSelectTab(id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "11px 14px",
+                borderRadius: 10,
+                border: "none",
+                cursor: "pointer",
+                textAlign: "left",
+                background: tab === id ? "rgba(91, 141, 239, 0.15)" : "transparent",
+                color: tab === id ? "#5b8def" : "#8b8fa8",
+                fontSize: 13,
+                fontWeight: tab === id ? 600 : 500,
+                width: "100%",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <Icon size={16} /> {label}
+            </button>
+          ))}
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -736,7 +795,6 @@ function WeatherWidget() {
   );
 }
 
-// ---------- OVERVIEW ----------
 function Overview({ onOpenMusic, onOpenChat }) {
   const [gh, setGh] = useState(null);
   const [vc, setVc] = useState(null);
@@ -929,7 +987,7 @@ function Projects() {
     <div>
       <SectionTitle title="Project GitHub" sub="Repository publik & live project zero-route" />
 
-      {/* 1. STATISTIK RINGKASAN: Terkunci 2x2 di Mobile, 4 Inline di Desktop */}
+      {/* STATISTIK RINGKASAN */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
         <div style={{ background: "#12162a", border: "1px solid #1e2338", borderRadius: 12, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
           <Github size={18} color="#5b8def" style={{ flexShrink: 0 }} />
@@ -964,7 +1022,7 @@ function Projects() {
         </div>
       </div>
 
-      {/* 2. SEARCH & FILTER RINGKAS (HORIZONTALLY SCROLLABLE FILTER) */}
+      {/* SEARCH & FILTER */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px" }}>
           <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
@@ -1010,7 +1068,7 @@ function Projects() {
 
       {!repos && !error && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data repo...</p>}
 
-      {/* 3. GRID CARDS (1 KOLOM DI MOBILE KECIL, 2 KOLOM DI TABLET/DESKTOP) */}
+      {/* GRID CARDS */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
         {filteredRepos?.map((r) => {
           const color = langColor(r.language);
@@ -1167,7 +1225,6 @@ function Projects() {
     </div>
   );
 }
-
 
 function PulseMonitor({ alive, label }) {
   return (
