@@ -15,10 +15,11 @@ import {
 } from "recharts";
 
 const PIE_COLORS = ["#c084fc", "#5b8def", "#4dd6c4", "#ff8a5b", "#f472b6", "#facc15"];
-
 const GEMINI_CHAT_API = "https://dashboard-chat-bot.iostream911.workers.dev/";
-
 const YT_SEARCH_API = "https://yt-music-portofolio.iostream911.workers.dev/";
+
+const FIXED_LAT = -6.2088;
+const FIXED_LON = 106.8456;
 
 function formatTime(s) {
   if (!s || isNaN(s)) return "0:00";
@@ -28,7 +29,7 @@ function formatTime(s) {
 }
 
 function useMusicPlayer() {
-  const [view, setView] = useState("closed"); // closed | search | now-playing | mini
+  const [view, setView] = useState("closed");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -163,7 +164,6 @@ function MusicPlayerUI({ music }) {
     <>
       <div id="yt-hidden-player" style={{ position: "fixed", width: 0, height: 0, overflow: "hidden", top: -9999 }} />
 
-      {/* POPUP CARD SEARCH */}
       {view === "search" && (
         <div 
           onClick={closePlayer}
@@ -214,7 +214,6 @@ function MusicPlayerUI({ music }) {
         </div>
       )}
 
-      {/* POPUP CARD NOW PLAYING */}
       {view === "now-playing" && currentTrack && (
         <div 
           onClick={minimize}
@@ -281,7 +280,6 @@ function MusicPlayerUI({ music }) {
         </div>
       )}
 
-      {/* MINI PLAYER (TIDAK DIUBAH) */}
       {view === "mini" && currentTrack && (
         <div onClick={() => setView("now-playing")} style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 150, background: "#12162a", borderTop: "1px solid #1e2338", display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", cursor: "pointer" }}>
           <img src={thumb} alt="" style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", animation: isPlaying ? "spinVinyl 4s linear infinite" : "none", flexShrink: 0 }} />
@@ -300,7 +298,7 @@ function MusicPlayerUI({ music }) {
   );
 }
 
- function useChatBot() {
+function useChatBot() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: "model", text: "Hai, aku Astrea. perlu check apa di dashboard ini?" },
@@ -360,7 +358,6 @@ function ChatBotUI({ chat }) {
           display: "flex", flexDirection: "column", overflow: "hidden",
         }}
       >
-        {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderBottom: "1px solid #1e2338" }}>
           <div style={{
             width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg,#5b8def,#c084fc)",
@@ -377,7 +374,6 @@ function ChatBotUI({ chat }) {
           </button>
         </div>
 
-        {/* Messages */}
         <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "14px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
           {messages.map((m, i) => (
             <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
@@ -402,7 +398,6 @@ function ChatBotUI({ chat }) {
           )}
         </div>
 
-        {/* Input */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", borderTop: "1px solid #1e2338" }}>
           <input
             value={input}
@@ -429,7 +424,7 @@ function ChatBotUI({ chat }) {
   );
 }
 
- export default function DashboardPage() {
+export default function DashboardPage() {
   const [tab, setTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const music = useMusicPlayer();
@@ -565,7 +560,6 @@ function DonutCard({ title, data, centerLabel, centerValue }) {
   );
 }
 
-// ---------- Jam realtime ----------
 function useClock() {
   const [now, setNow] = useState(null);
   useEffect(() => {
@@ -576,7 +570,6 @@ function useClock() {
   return now;
 }
 
-// ---------- Grafik bukit: data asli aktivitas GitHub harian (14 hari) ----------
 function useActivityWave() {
   const [data, setData] = useState(
     Array.from({ length: 14 }, (_, i) => ({ x: i, y: Math.round(20 + Math.random() * 60) }))
@@ -601,7 +594,6 @@ function useActivityWave() {
   return { data, source };
 }
 
-// ---------- Ukur latency asli tiap API (client-side) ----------
 function useApiLatency() {
   const [latency, setLatency] = useState({});
   useEffect(() => {
@@ -620,69 +612,6 @@ function useApiLatency() {
     });
   }, []);
   return latency;
-}
-
-// ---------- OVERVIEW ----------
-function Overview({ onOpenMusic, onOpenChat }) {
-  const [gh, setGh] = useState(null);
-  const [vc, setVc] = useState(null);
-  const [sb, setSb] = useState(null);
-  const [cf, setCf] = useState(null);
-  const now = useClock();
-  const { data: wave, source: waveSource } = useActivityWave();
-  const latency = useApiLatency();
-
-  useEffect(() => {
-    fetch("/api/github/repos").then(r => r.json()).then(setGh).catch(() => {});
-    fetch("/api/vercel/project").then(r => r.json()).then(setVc).catch(() => {});
-    fetch("/api/supabase/status").then(r => r.json()).then(setSb).catch(() => {});
-    fetch("/api/cloudflare/metrics").then(r => r.json()).then(setCf).catch(() => {});
-  }, []);
-
-  const timeStr = now
-    ? now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-    : "--:--:--";
-  const dateStr = now ? now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" }) : "";
-
-  const LATENCY_CAP = 800; // ms, skala buat donut
-  const latencyDonut = (label, ms) => {
-    if (ms == null) return { name: label, data: [] };
-    const pct = Math.min(100, Math.round((ms / LATENCY_CAP) * 100));
-    return {
-      name: label,
-      centerValue: `${ms} ms`,
-      data: [
-        { name: "Respons", value: pct },
-        { name: "Sisa skala", value: 100 - pct },
-      ],
-    };
-  };
-  
-  function useUptimeHistory() {
-  const [history, setHistory] = useState([]);
-
-  useEffect(() => {
-    let stored = [];
-    try {
-      stored = JSON.parse(localStorage.getItem("uptime_history") || "[]");
-    } catch (e) {}
-
-    fetch("/api/vercel/project")
-      .then((r) => r.json())
-      .then((vc) => {
-        const ok = !!vc?.configured && (vc.status || "").toLowerCase().includes("ready");
-        const updated = [...stored, { time: Date.now(), ok }].slice(-30);
-        try { localStorage.setItem("uptime_history", JSON.stringify(updated)); } catch (e) {}
-        setHistory(updated);
-      })
-      .catch(() => {
-        const updated = [...stored, { time: Date.now(), ok: false }].slice(-30);
-        try { localStorage.setItem("uptime_history", JSON.stringify(updated)); } catch (e) {}
-        setHistory(updated);
-      });
-  }, []);
-
-  return history;
 }
 
 function WorldClockMini() {
@@ -711,22 +640,15 @@ function WorldClockMini() {
   );
 }
 
-const FIXED_LAT = -6.2088;
-const FIXED_LON = 106.8456;
-
 function useWeather() {
   const [weather, setWeather] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchWeather = (lat, lon) => {
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=auto`)
-        .then((r) => r.json())
-        .then((json) => setWeather(json.current))
-        .catch(() => setError("Gagal memuat cuaca"));
-    };
-
-    fetchWeather(FIXED_LAT, FIXED_LON);
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${FIXED_LAT}&longitude=${FIXED_LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=auto`)
+      .then((r) => r.json())
+      .then((json) => setWeather(json.current))
+      .catch(() => setError("Gagal memuat cuaca"));
   }, []);
 
   return { weather, error };
@@ -814,6 +736,42 @@ function WeatherWidget() {
   );
 }
 
+// ---------- OVERVIEW ----------
+function Overview({ onOpenMusic, onOpenChat }) {
+  const [gh, setGh] = useState(null);
+  const [vc, setVc] = useState(null);
+  const [sb, setSb] = useState(null);
+  const [cf, setCf] = useState(null);
+  const now = useClock();
+  const { data: wave, source: waveSource } = useActivityWave();
+  const latency = useApiLatency();
+
+  useEffect(() => {
+    fetch("/api/github/repos").then(r => r.json()).then(setGh).catch(() => {});
+    fetch("/api/vercel/project").then(r => r.json()).then(setVc).catch(() => {});
+    fetch("/api/supabase/status").then(r => r.json()).then(setSb).catch(() => {});
+    fetch("/api/cloudflare/metrics").then(r => r.json()).then(setCf).catch(() => {});
+  }, []);
+
+  const timeStr = now
+    ? now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    : "--:--:--";
+  const dateStr = now ? now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" }) : "";
+
+  const LATENCY_CAP = 800;
+  const latencyDonut = (label, ms) => {
+    if (ms == null) return { name: label, data: [] };
+    const pct = Math.min(100, Math.round((ms / LATENCY_CAP) * 100));
+    return {
+      name: label,
+      centerValue: `${ms} ms`,
+      data: [
+        { name: "Respons", value: pct },
+        { name: "Sisa skala", value: 100 - pct },
+      ],
+    };
+  };
+
   const donutSupabase = latencyDonut("Latency Supabase", latency.supabase);
   const donutVercel = latencyDonut("Latency Vercel", latency.vercel);
   const donutCloudflare = latencyDonut("Latency Cloudflare", latency.cloudflare);
@@ -831,13 +789,13 @@ function WeatherWidget() {
         </div>
 
         <div className="hero-icons">
-  <button onClick={onOpenMusic} style={{ all: "unset", cursor: "pointer", flex: 1 }}>
-    <IconStatCard icon={Music2} label="Music" tint="#f472b6" note="Cari & putar lagu" />
-  </button>
-  <button onClick={onOpenChat} style={{ all: "unset", cursor: "pointer", flex: 1 }}>
-    <IconStatCard icon={Bot} label="Assistant" tint="#5b8def" note="Chat dengan Astrea" />
-  </button>
-</div>
+          <button onClick={onOpenMusic} style={{ all: "unset", cursor: "pointer", flex: 1 }}>
+            <IconStatCard icon={Music2} label="Music" tint="#f472b6" note="Cari & putar lagu" />
+          </button>
+          <button onClick={onOpenChat} style={{ all: "unset", cursor: "pointer", flex: 1 }}>
+            <IconStatCard icon={Bot} label="Assistant" tint="#5b8def" note="Chat dengan Astrea" />
+          </button>
+        </div>
 
         <div className="hero-calendar">
           <div style={{
@@ -856,10 +814,11 @@ function WeatherWidget() {
             )}
           </div>
         </div>
-<div className="grid-2" style={{ marginBottom: 14 }}>
-  <WorldClockMini />
-  <WeatherWidget />
-</div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14, marginBottom: 14 }}>
+        <WorldClockMini />
+        <WeatherWidget />
       </div>
 
       <Card style={{ marginBottom: 14 }}>
@@ -902,14 +861,6 @@ function WeatherWidget() {
   );
 }
 
-function StatRow({ label, value, good }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid #1e2338" }}>
-      <span style={{ fontSize: 12.5, color: "#9aa0bd" }}>{label}</span>
-      <span style={{ fontSize: 12.5, fontWeight: 600, color: good ? "#4dd6c4" : "#e7e9f3" }}>{value}</span>
-    </div>
-  );
-}
 function DbRow({ icon: Icon, name, ok, detail }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #1e2338" }}>
@@ -923,7 +874,6 @@ function DbRow({ icon: Icon, name, ok, detail }) {
   );
 }
 
-// ---------- GITHUB PROJECTS ----------
 const LANG_COLORS = {
   JavaScript: "#f0db4f",
   TypeScript: "#5b8def",
@@ -1137,7 +1087,6 @@ function VercelProject() {
   );
 }
 
-// ---------- DATABASE ----------
 function DatabasePanel() {
   const [sb, setSb] = useState(null);
   const [cf, setCf] = useState(null);
@@ -1157,14 +1106,12 @@ function DatabasePanel() {
     <div>
       <SectionTitle title="Database" sub="Supabase & Cloudflare Workers" />
 
-      {/* Stat cards ringkas */}
       <div className="grid-3" style={{ marginBottom: 14 }}>
         <MiniStat icon={Database} tint="#4dd6c4" label="Baris di tabel absen" value={sb?.configured && sb.totalRows != null ? sb.totalRows : "-"} />
         <MiniStat icon={Cloud} tint="#ff8a5b" label="Total Request (3 Worker)" value={cf?.configured ? totalRequests : "-"} />
         <MiniStat icon={AlertTriangle} tint={totalErrors > 0 ? "#f4527a" : "#4dd6c4"} label="Total Error" value={cf?.configured ? totalErrors : "-"} />
       </div>
 
-      {/* Supabase: data asli */}
       <Card style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <Database size={16} color="#4dd6c4" /> <span style={{ fontWeight: 600, fontSize: 13.5 }}>Supabase — tabel {sb?.tableName || "absen"}</span>
@@ -1198,7 +1145,6 @@ function DatabasePanel() {
         )}
       </Card>
 
-      {/* Cloudflare: bar chart + status per worker */}
       <Card style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <Cloud size={16} color="#ff8a5b" /> <span style={{ fontWeight: 600, fontSize: 13.5 }}>Cloudflare Workers</span>
