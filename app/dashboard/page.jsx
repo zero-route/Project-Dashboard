@@ -7,6 +7,7 @@ import {
   Globe, Radio, Copy, Search, SkipBack, SkipForward, Pause, Play, ChevronDown,
   Send, Sparkles,
   Sun, CloudRain, CloudSnow, CloudLightning, Wind, Droplets,
+  X,
 } from "lucide-react";
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -1186,25 +1187,25 @@ function Projects() {
                     >
                       Live Demo <ExternalLink size={10} />
                     </a>
-                  ) : r.isPrivate ? (
-                    <button
-                      disabled
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 4,
-                        background: "#c084fc22",
-                        border: "1px solid #c084fc66",
-                        color: "#c084fc",
-                        padding: "6px 8px",
-                        borderRadius: 6,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        cursor: "default",
-                      }}
-                    >
+                 ) : r.isPrivate ? (
+  <button
+    disabled
+    style={{
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 4,
+      background: "#c084fc",
+      border: "none",
+      color: "#0a0c14",
+      padding: "6px 8px",
+      borderRadius: 6,
+      fontSize: 11,
+      fontWeight: 700,
+      cursor: "not-allowed",
+    }}
+  >
                       Repo Private
                     </button>
                   ) : (
