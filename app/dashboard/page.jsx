@@ -856,7 +856,7 @@ function WeatherWidget() {
             )}
           </div>
         </div>
-<div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, marginBottom: 14 }}>
+<div className="grid-2" style={{ marginBottom: 14 }}>
   <WorldClockMini />
   <WeatherWidget />
 </div>
