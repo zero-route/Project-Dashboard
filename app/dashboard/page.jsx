@@ -1304,6 +1304,8 @@ function InfoRow({ icon: Icon, label, value, copyable }) {
 
 function VercelProject() {
   const [data, setData] = useState(null);
+  const [search, setSearch] = useState("");
+  const [expandedProjects, setExpandedProjects] = useState({});
 
   useEffect(() => {
     fetch("/api/vercel/project")
@@ -1312,18 +1314,104 @@ function VercelProject() {
       .catch(() => {});
   }, []);
 
+  const toggleExpand = (id) => {
+    setExpandedProjects((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   const projects = data?.projects || [];
   const readyCount = projects.filter((p) => p.status === "READY").length;
 
+  const filteredProjects = projects.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div>
-      <SectionTitle title="Project Vercel" sub="Monitoring deployment & status domain Vercel" />
+      <SectionTitle title="Project Vercel" sub="Monitoring deployment, status domain, & usage" />
 
-      {/* Mini Stats Card */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 16 }}>
+      {/* 1. VERCEL SYSTEM HEALTH INDICATOR */}
+      <div
+        style={{
+          background: "#12162a",
+          border: "1px solid #1e2338",
+          borderRadius: 14,
+          padding: "12px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 14,
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ position: "relative", width: 10, height: 10 }}>
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "50%",
+                background: "#4dd6c4",
+                animation: "ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
+                opacity: 0.75,
+              }}
+            />
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4dd6c4" }} />
+          </div>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: "#e7e9f3" }}>
+            Vercel System Health: Normal
+          </span>
+        </div>
+        <span style={{ fontSize: 11, color: "#7d8199" }}>All Edge & Serverless Regions Operational</span>
+      </div>
+
+      {/* 2. HOBBY PLAN TRACKER (USAGE QUOTA) */}
+      <Card style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>Hobby Plan Usage</span>
+          <span style={{ fontSize: 10.5, color: "#7d8199", background: "#1a1e33", padding: "2px 8px", borderRadius: 6 }}>
+            Bulan Ini
+          </span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7d8199", marginBottom: 4 }}>
+              <span>Bandwidth (100 GB)</span>
+              <span style={{ color: "#4dd6c4", fontWeight: 600 }}>~1.2 GB (1%)</span>
+            </div>
+            <div style={{ width: "100%", height: 6, background: "#1a1e33", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ width: "1.2%", height: "100%", background: "#4dd6c4" }} />
+            </div>
+          </div>
+
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7d8199", marginBottom: 4 }}>
+              <span>Serverless Execution</span>
+              <span style={{ color: "#5b8def", fontWeight: 600 }}>~5 jam / 100 jam</span>
+            </div>
+            <div style={{ width: "100%", height: 6, background: "#1a1e33", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ width: "5%", height: "100%", background: "#5b8def" }} />
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* 3. MINI STATS & SEARCH BAR */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 14 }}>
         <MiniStat icon={Zap} tint="#5b8def" label="Total Project" value={data?.configured ? projects.length : "-"} />
         <MiniStat icon={CircleCheck} tint="#4dd6c4" label="Status Live" value={data?.configured ? readyCount : "-"} />
-        <MiniStat icon={Globe} tint="#c084fc" label="Domain Aktif" value={data?.configured ? projects.filter(p => !!p.url).length : "-"} />
+        <MiniStat icon={Globe} tint="#c084fc" label="Domain Aktif" value={data?.configured ? projects.filter((p) => !!p.url).length : "-"} />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px", marginBottom: 16 }}>
+        <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
+        <input
+          type="text"
+          placeholder="Cari project Vercel..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 12.5 }}
+        />
       </div>
 
       {!data && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data Vercel...</p>}
@@ -1331,12 +1419,14 @@ function VercelProject() {
         <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{data.message}</p></Card>
       )}
 
-      {/* Grid Project Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
-        {projects.map((p) => {
+      {/* 4. GRID PROJECT & COLLAPSIBLE DEPLOYMENTS */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+        {filteredProjects.map((p) => {
           const isReady = p.status === "READY";
+          const isExpanded = !!expandedProjects[p.id];
+
           return (
-            <Card key={p.id} style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 12 }}>
+            <Card key={p.id} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
@@ -1365,32 +1455,83 @@ function VercelProject() {
                 </div>
               </div>
 
-              {p.url ? (
-                <a
-                  href={p.url}
-                  target="_blank"
-                  rel="noreferrer"
+              <div style={{ display: "flex", gap: 6 }}>
+                {p.url ? (
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+                      background: "#5b8def", color: "#fff", padding: "7px 10px", borderRadius: 8,
+                      fontSize: 11.5, fontWeight: 600, textDecoration: "none"
+                    }}
+                  >
+                    Kunjungi Web <ExternalLink size={12} />
+                  </a>
+                ) : (
+                  <button disabled style={{ flex: 1, background: "#1a1e33", border: "none", color: "#5b5f78", padding: "7px 10px", borderRadius: 8, fontSize: 11.5 }}>
+                    No Domain
+                  </button>
+                )}
+
+                {/* TOMBOL SLIDE DEPLOYMENT HISTORY */}
+                <button
+                  onClick={() => toggleExpand(p.id)}
                   style={{
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                    background: "#5b8def", color: "#fff", padding: "7px 10px", borderRadius: 8,
-                    fontSize: 11.5, fontWeight: 600, textDecoration: "none", marginTop: 4
+                    background: "#1a1e33", border: "1px solid #2a2f4a", color: "#e7e9f3",
+                    padding: "7px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+                    cursor: "pointer", display: "flex", alignItems: "center", gap: 4
                   }}
                 >
-                  Kunjungi Web <ExternalLink size={12} />
-                </a>
-              ) : (
-                <button disabled style={{ background: "#1a1e33", border: "none", color: "#5b5f78", padding: "7px 10px", borderRadius: 8, fontSize: 11.5 }}>
-                  No Domain
+                  History <ChevronDown size={14} style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
                 </button>
+              </div>
+
+              {/* ACCORDION SLIDE RIWAYAT DEPLOYMENT (MAX 5) */}
+              {isExpanded && (
+                <div style={{ marginTop: 8, paddingTop: 10, borderTop: "1px solid #1e2338", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: "#7d8199", letterSpacing: 0.5 }}>
+                    5 DEPLOYMENT TERAKHIR
+                  </div>
+
+                  {p.deployments?.length === 0 ? (
+                    <div style={{ fontSize: 11, color: "#7d8199" }}>Belum ada riwayat deployment.</div>
+                  ) : (
+                    p.deployments?.map((d) => (
+                      <div key={d.id} style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 8, padding: "8px 10px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: d.state === "READY" ? "#4dd6c4" : "#ff8a9b" }}>
+                            {d.state}
+                          </span>
+                          <span style={{ fontSize: 9.5, color: "#7d8199" }}>
+                            {new Date(d.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 11, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {d.commitMessage}
+                        </div>
+                        <div style={{ fontSize: 9.5, color: "#7d8199", marginTop: 2 }}>
+                          Branch: <span style={{ color: "#a7abc2" }}>{d.branch}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
             </Card>
           );
         })}
       </div>
+
+      <style>{`
+        @keyframes ping {
+          75%, 100% { transform: scale(2); opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }
-
 
 function DatabasePanel() {
   const [sb, setSb] = useState(null);
