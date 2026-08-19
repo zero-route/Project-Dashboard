@@ -1420,7 +1420,9 @@ function VercelProject() {
       )}
 
       {/* 4. GRID PROJECT & COLLAPSIBLE DEPLOYMENTS */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14,
+        alignItems: "start",
+      }}>
         {filteredProjects.map((p) => {
           const isReady = p.status === "READY";
           const isExpanded = !!expandedProjects[p.id];
