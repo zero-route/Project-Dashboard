@@ -15,7 +15,7 @@ import {
 
 const PIE_COLORS = ["#c084fc", "#5b8def", "#4dd6c4", "#ff8a5b", "#f472b6", "#facc15"];
 
-const GEMINI_CHAT_API = "https://gemini-chat-bot.iostream911.workers.dev/";
+const GEMINI_CHAT_API = "https://dashboard-chat-bot.iostream911.workers.dev/";
 
 const YT_SEARCH_API = "https://yt-music-portofolio.iostream911.workers.dev/";
 
