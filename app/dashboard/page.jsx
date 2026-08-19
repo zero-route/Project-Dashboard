@@ -1188,25 +1188,25 @@ function Projects() {
                       Live Demo <ExternalLink size={10} />
                     </a>
                  ) : r.isPrivate ? (
-  <button
-    disabled
-    style={{
-      flex: 1,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 4,
-      background: "#c084fc",
-      border: "none",
-      color: "#0a0c14",
-      padding: "6px 8px",
-      borderRadius: 6,
-      fontSize: 11,
-      fontWeight: 700,
-      cursor: "not-allowed",
-    }}
-  >
-                      Repo Private
+         <button
+           disabled
+           style={{
+           flex: 1,
+           display: "flex",
+           alignItems: "center",
+           justifyContent: "center",
+           gap: 4,
+           background: "#f34b7d",
+           border: "none",
+           color: "#0a0c14",
+           padding: "6px 8px",
+           borderRadius: 6,
+           fontSize: 11,
+           fontWeight: 700,
+           cursor: "not-allowed",
+           }}
+      >
+          Repo Private
                     </button>
                   ) : (
                     <button
