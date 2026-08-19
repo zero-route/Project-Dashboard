@@ -368,7 +368,7 @@ function ChatBotUI({ chat }) {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: "#e7e9f3" }}>Astrea</div>
-            <div style={{ fontSize: 10.5, color: "#7d8199" }}>AI Assistant Portofolio</div>
+            <div style={{ fontSize: 10.5, color: "#7d8199" }}>AI Assistant</div>
           </div>
           <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#e7e9f3", cursor: "pointer", display: "flex" }}>
             <ChevronDown size={22} />
