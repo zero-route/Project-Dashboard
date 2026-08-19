@@ -1641,9 +1641,10 @@ function VercelProject() {
 function DatabasePanel() {
   const [sb, setSb] = useState(null);
   const [cf, setCf] = useState(null);
+
   useEffect(() => {
-    fetch("/api/supabase/status").then(r => r.json()).then(setSb).catch(() => {});
-    fetch("/api/cloudflare/metrics").then(r => r.json()).then(setCf).catch(() => {});
+    fetch("/api/supabase/status").then((r) => r.json()).then(setSb).catch(() => {});
+    fetch("/api/cloudflare/metrics").then((r) => r.json()).then(setCf).catch(() => {});
   }, []);
 
   const workers = cf?.workers || [];
@@ -1651,95 +1652,197 @@ function DatabasePanel() {
   const totalErrors = workers.reduce((s, w) => s + (w.errors || 0), 0);
   const activeWorkers = workers.filter((w) => (w.requests || 0) > 0).length;
 
-  const barData = workers.map((w) => ({ name: w.scriptName, requests: w.requests || 0 }));
-
   return (
     <div>
-      <SectionTitle title="Database" sub="Supabase & Cloudflare Workers" />
+      <SectionTitle title="Database & Edge Services" sub="Real-time DBMS Explorer & Cloudflare Workers Gateway" />
 
-      <div className="grid-3" style={{ marginBottom: 14 }}>
-        <MiniStat icon={Database} tint="#4dd6c4" label="Baris di tabel absen" value={sb?.configured && sb.totalRows != null ? sb.totalRows : "-"} />
-        <MiniStat icon={Cloud} tint="#ff8a5b" label="Total Request (3 Worker)" value={cf?.configured ? totalRequests : "-"} />
-        <MiniStat icon={AlertTriangle} tint={totalErrors > 0 ? "#f4527a" : "#4dd6c4"} label="Total Error" value={cf?.configured ? totalErrors : "-"} />
+      {/* MINI STATS OVERVIEW */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 16 }}>
+        <MiniStat icon={Database} tint="#3ecf8e" label="Supabase Table" value={sb?.tableName || "absen"} />
+        <MiniStat icon={Activity} tint="#3ecf8e" label="Total Records" value={sb?.configured && sb.totalRows != null ? sb.totalRows : "-"} />
+        <MiniStat icon={Cloud} tint="#f38020" label="Workers Active" value={cf?.configured ? `${activeWorkers}/${workers.length}` : "-"} />
+        <MiniStat icon={Zap} tint="#f38020" label="Total Requests" value={cf?.configured ? totalRequests : "-"} />
       </div>
 
-      <Card style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <Database size={16} color="#4dd6c4" /> <span style={{ fontWeight: 600, fontSize: 13.5 }}>Supabase — tabel {sb?.tableName || "absen"}</span>
-        </div>
-        {!sb && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat...</p>}
-        {sb && !sb.configured && <div style={{ fontSize: 13, color: "#7d8199" }}>{sb.message}</div>}
-        {sb?.configured && sb.error && (
-          <div style={{ fontSize: 12.5, color: "#ff8a9b" }}>{sb.error} — {sb.detail}</div>
-        )}
-        {sb?.configured && !sb.error && (
-          <>
-            <div style={{ fontSize: 26, fontWeight: 700, marginBottom: 2 }}>{sb.totalRows}</div>
-            <div style={{ fontSize: 11.5, color: "#7d8199", marginBottom: 14 }}>total baris tercatat</div>
-
-            <div style={{ fontSize: 12, fontWeight: 600, color: "#9aa0bd", marginBottom: 8 }}>5 Data Terbaru</div>
-            {sb.recentRows?.length === 0 && <div style={{ fontSize: 12, color: "#7d8199" }}>Belum ada data.</div>}
-            <div style={{ display: "grid", gap: 8 }}>
-              {sb.recentRows?.map((row, i) => (
-                <div key={i} style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 10, padding: "8px 10px" }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px" }}>
-                    {sb.columns?.slice(0, 4).map((col) => (
-                      <span key={col} style={{ fontSize: 11, color: "#7d8199" }}>
-                        <span style={{ color: "#9aa0bd" }}>{col}:</span> {String(row[col] ?? "-")}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
+      {/* 1. SUPABASE DATABASE EXPLORER */}
+      <Card style={{ marginBottom: 18, padding: 0, overflow: "hidden", border: "1px solid #1e2338" }}>
+        <div style={{ padding: "14px 18px", background: "#0e1120", borderBottom: "1px solid #1e2338", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: "#3ecf8e22", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Database size={16} color="#3ecf8e" />
             </div>
-          </>
-        )}
-      </Card>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#e7e9f3" }}>
+                Supabase Postgres — <span style={{ color: "#3ecf8e" }}>{sb?.tableName || "public"}</span>
+              </div>
+              <div style={{ fontSize: 10.5, color: "#7d8199" }}>PostgreSQL Data Browser (RLS Enabled)</div>
+            </div>
+          </div>
 
-      <Card style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <Cloud size={16} color="#ff8a5b" /> <span style={{ fontWeight: 600, fontSize: 13.5 }}>Cloudflare Workers</span>
-          {cf?.configured && (
-            <span style={{ fontSize: 11, color: "#7d8199", marginLeft: "auto" }}>{activeWorkers}/{workers.length} aktif</span>
+          <div style={{ display: "flex", gap: 6 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, background: "#3ecf8e18", color: "#3ecf8e", padding: "3px 8px", borderRadius: 6, border: "1px solid #3ecf8e33" }}>
+              POSTGRESQL
+            </span>
+            <span style={{ fontSize: 10, fontWeight: 700, background: "#1a1e33", color: "#a7abc2", padding: "3px 8px", borderRadius: 6 }}>
+              {sb?.totalRows || 0} Rows
+            </span>
+          </div>
+        </div>
+
+        <div style={{ padding: "14px 18px" }}>
+          {!sb && <p style={{ color: "#7d8199", fontSize: 13, margin: 0 }}>Connecting to Supabase Database...</p>}
+          {sb && !sb.configured && <div style={{ fontSize: 13, color: "#ff8a9b" }}>{sb.message}</div>}
+          {sb?.configured && sb.error && (
+            <div style={{ fontSize: 12.5, color: "#ff8a9b" }}>{sb.error} — {sb.detail}</div>
+          )}
+
+          {sb?.configured && !sb.error && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#7d8199", marginBottom: 10, display: "flex", justifyContent: "space-between" }}>
+                <span>RAW TABLE VIEWER (TOP 5 RECENT)</span>
+                <span>Sorted: Newest First</span>
+              </div>
+
+              {/* TABLE DATA SYSTEM */}
+              <div style={{ overflowX: "auto", border: "1px solid #1e2338", borderRadius: 10, background: "#0a0c14" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 11.5 }}>
+                  <thead>
+                    <tr style={{ background: "#12162a", borderBottom: "1px solid #1e2338", color: "#7d8199" }}>
+                      <th style={{ padding: "8px 12px", width: 40, textAlign: "center" }}>#</th>
+                      {sb.columns?.map((col) => (
+                        <th key={col} style={{ padding: "8px 12px", color: "#4dd6c4", fontWeight: 700 }}>
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sb.recentRows?.length === 0 ? (
+                      <tr>
+                        <td colSpan={sb.columns?.length + 1 || 1} style={{ padding: 16, textAlign: "center", color: "#7d8199" }}>
+                          Table is empty.
+                        </td>
+                      </tr>
+                    ) : (
+                      sb.recentRows?.map((row, idx) => (
+                        <tr key={idx} style={{ borderBottom: "1px solid #12162a", color: "#e7e9f3" }}>
+                          <td style={{ padding: "8px 12px", color: "#5b5f78", textAlign: "center", fontWeight: 600 }}>{idx + 1}</td>
+                          {sb.columns?.map((col) => {
+                            const val = String(row[col] ?? "-");
+                            const isBool = val === "true" || val === "false";
+                            return (
+                              <td key={col} style={{ padding: "8px 12px", whiteSpace: "nowrap" }}>
+                                {isBool ? (
+                                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: val === "true" ? "#4dd6c422" : "#ff8a9b22", color: val === "true" ? "#4dd6c4" : "#ff8a9b" }}>
+                                    {val.toUpperCase()}
+                                  </span>
+                                ) : (
+                                  val
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
-        {!cf && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat...</p>}
-        {cf && !cf.configured && <div style={{ fontSize: 13, color: "#7d8199" }}>{cf.message}</div>}
-        {cf?.configured && workers.length > 0 && (
-          <ResponsiveContainer width="100%" height={140}>
-            <BarChart data={barData}>
-              <CartesianGrid stroke="#1e2338" vertical={false} />
-              <XAxis dataKey="name" stroke="#5b5f78" fontSize={10} tickLine={false} axisLine={false} />
-              <YAxis stroke="#5b5f78" fontSize={10} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ background: "#181c30", border: "1px solid #2a2f4a", borderRadius: 8, fontSize: 12 }} />
-              <Bar dataKey="requests" radius={[6, 6, 0, 0]}>
-                {barData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
       </Card>
 
-      <Card>
-        {cf?.configured && workers.map((w) => {
-          const isActive = (w.requests || 0) > 0;
-          return (
-            <div key={w.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid #1e2338" }}>
-              <span style={{ width: 8, height: 8, borderRadius: 4, background: isActive ? "#4dd6c4" : "#5b5f78", flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{w.scriptName}</div>
-                <div style={{ display: "flex", gap: 14, fontSize: 11, color: "#7d8199", flexWrap: "wrap" }}>
-                  <span>Requests: {w.requests ?? "-"}</span>
-                  <span>Errors: {w.errors ?? "-"}</span>
-                  <span>CPU p50: {w.cpuTimeP50Ms ?? "-"} ms</span>
-                </div>
-              </div>
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: isActive ? "#4dd6c4" : "#7d8199", background: isActive ? "#4dd6c422" : "#1a1e33", padding: "3px 8px", borderRadius: 20, flexShrink: 0 }}>
-                {isActive ? "AKTIF" : "IDLE"}
-              </span>
+      {/* 2. CLOUDFLARE WORKERS GATEWAY */}
+      <Card style={{ padding: 0, overflow: "hidden", border: "1px solid #1e2338" }}>
+        <div style={{ padding: "14px 18px", background: "#0e1120", borderBottom: "1px solid #1e2338", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: "#f3802022", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Cloud size={16} color="#f38020" />
             </div>
-          );
-        })}
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#e7e9f3" }}>Cloudflare Workers & APIs</div>
+              <div style={{ fontSize: 10.5, color: "#7d8199" }}>Serverless Edge Computing Console</div>
+            </div>
+          </div>
+
+          <span style={{ fontSize: 10, fontWeight: 700, background: "#f3802018", color: "#f38020", padding: "3px 8px", borderRadius: 6, border: "1px solid #f3802033" }}>
+            GLOBAL EDGE NETWORK
+          </span>
+        </div>
+
+        <div style={{ padding: "16px 18px" }}>
+          {!cf && <p style={{ color: "#7d8199", fontSize: 13, margin: 0 }}>Loading Edge Workers Metrics...</p>}
+          {cf && !cf.configured && <div style={{ fontSize: 13, color: "#ff8a9b" }}>{cf.message}</div>}
+
+          {cf?.configured && workers.length > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+              {workers.map((w) => {
+                const isActive = (w.requests || 0) > 0;
+                return (
+                  <div
+                    key={w.key}
+                    style={{
+                      background: "#0a0c14",
+                      border: "1px solid #1e2338",
+                      borderRadius: 12,
+                      padding: 14,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      gap: 10,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: isActive ? "#4dd6c4" : "#5b5f78", flexShrink: 0 }} />
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {w.scriptName}
+                          </span>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: 9.5,
+                            fontWeight: 700,
+                            padding: "2px 6px",
+                            borderRadius: 4,
+                            background: isActive ? "#4dd6c422" : "#1a1e33",
+                            color: isActive ? "#4dd6c4" : "#7d8199",
+                          }}
+                        >
+                          {isActive ? "ACTIVE" : "IDLE"}
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 10 }}>
+                        <span style={{ fontSize: 9.5, fontWeight: 700, background: "#5b8def22", color: "#5b8def", padding: "1px 5px", borderRadius: 4 }}>
+                          GET / POST
+                        </span>
+                        <span style={{ fontSize: 10.5, color: "#7d8199" }}>Edge Worker</span>
+                      </div>
+                    </div>
+
+                    <div style={{ background: "#12162a", borderRadius: 8, padding: "8px 10px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, textAlign: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 9.5, color: "#7d8199" }}>Requests</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "#e7e9f3", marginTop: 2 }}>{w.requests ?? 0}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 9.5, color: "#7d8199" }}>Errors</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: w.errors > 0 ? "#ff8a9b" : "#4dd6c4", marginTop: 2 }}>{w.errors ?? 0}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 9.5, color: "#7d8199" }}>CPU p50</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "#c084fc", marginTop: 2 }}>{w.cpuTimeP50Ms ?? 0} ms</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </Card>
     </div>
   );
