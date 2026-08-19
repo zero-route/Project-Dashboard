@@ -945,10 +945,10 @@ const LANG_COLORS = {
 };
 
 function getCustomLanguageLabel(repo) {
+  if (!repo) return "Unknown"; // Tambahan pengaman
   const lang = repo.language;
-  const name = repo.name.toLowerCase();
+  const name = repo.name?.toLowerCase() || "";
 
-  // Hanya repo spesifik yang memang React/NextJS yang diubah jadi JSX/TSX
   if (lang === "JavaScript") {
     if (name.includes("dashboard") || name.includes("react")) {
       return "JSX";
@@ -960,10 +960,8 @@ function getCustomLanguageLabel(repo) {
     }
   }
 
-  // Repo murni JS (seperti esp32-dex & vault), HTML, CSS tetap sesuai bawaan
   return lang || "Unknown";
 }
-
 
 function Projects() {
   const [repos, setRepos] = useState(null);
