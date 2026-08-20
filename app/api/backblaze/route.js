@@ -2,23 +2,28 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const keyId = process.env.B2_APPLICATION_KEY_ID?.trim();
+    let keyId = process.env.B2_APPLICATION_KEY_ID?.trim();
     const applicationKey = process.env.B2_APPLICATION_KEY?.trim();
 
-    // 1. Validasi Keberadaan Environment Variables
     if (!keyId || !applicationKey) {
       return NextResponse.json(
         {
           configured: false,
           health: "Unknown",
-          message: "Environment Variable B2_APPLICATION_KEY_ID atau B2_APPLICATION_KEY belum dipasang di Vercel.",
+          message: "Key ID atau Application Key belum diatur di Vercel.",
           buckets: [],
         },
         { status: 200 }
       );
     }
 
-    // 2. Request Autentikasi ke Backblaze B2 API
+    // PENTING: Jika menggunakan Master Key (keyID pendek/12 karakter), 
+    // Backblaze mewajibkan awalan 004 agar formatnya sesuai dengan API spec.
+    if (keyId.length === 12 && !keyId.startsWith("004")) {
+      keyId = `004${keyId}`;
+    }
+
+    // Authenticate ke Backblaze B2 via Basic Auth
     const authHeader = Buffer.from(`${keyId}:${applicationKey}`).toString("base64");
     const authRes = await fetch("https://api.backblazeb2.com/b2api/v3/b2_authorize_account", {
       headers: { Authorization: `Basic ${authHeader}` },
@@ -27,20 +32,19 @@ export async function GET() {
 
     const authData = await authRes.json();
 
-    // 3. JIKA AUTH GAGAL: Langsung kembalikan pesan error resmi tanpa lanjut panggil URL undefined
     if (!authRes.ok || !authData.apiUrl) {
       return NextResponse.json(
         {
           configured: true,
           health: "Error",
-          error: `Backblaze Auth Gagal (${authData.code || authRes.status}): ${authData.message || "Key ID atau Application Key tidak valid."}`,
+          error: `Backblaze Auth Gagal (${authData.code || authRes.status}): ${authData.message || "Key ID atau Application Key tidak diterima oleh server B2."}`,
           buckets: [],
         },
         { status: 200 }
       );
     }
 
-    // 4. Fetch Daftar Bucket (hanya dijalankan jika apiUrl valid)
+    // Fetch list buckets
     const bucketsRes = await fetch(`${authData.apiUrl}/b2api/v3/b2_list_buckets`, {
       method: "POST",
       headers: {
@@ -58,7 +62,7 @@ export async function GET() {
         {
           configured: true,
           health: "Error",
-          error: `Gagal Ambil Bucket: ${bucketsData.message || bucketsRes.statusText}`,
+          error: `Fetch Bucket Gagal: ${bucketsData.message || bucketsRes.statusText}`,
           buckets: [],
         },
         { status: 200 }
@@ -84,7 +88,7 @@ export async function GET() {
       {
         configured: true,
         health: "Error",
-        error: error.message || "Gagal terhubung ke server Backblaze B2",
+        error: error.message || "Gagal terhubung ke Backblaze B2",
         buckets: [],
       },
       { status: 500 }
