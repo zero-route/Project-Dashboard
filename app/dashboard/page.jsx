@@ -614,8 +614,13 @@ function useActivityWave() {
       .then((json) => {
         const points = json?.points || [];
         if (points.length > 0) {
-          const max = Math.max(...points.map((p) => p.y), 1);
-          const scaled = points.map((p) => ({ x: p.x, y: Math.round((p.y / max) * 100) }));
+
+          const maxCommitThreshold = Math.max(...points.map((p) => p.y), 20); 
+          const scaled = points.map((p) => ({
+            x: p.x,
+            // Memastikan data terpetakan presisi di skala 0 - 100
+            y: Math.min(100, Math.round((p.y / maxCommitThreshold) * 100))
+          }));
           setData(scaled);
           setSource("github");
         }
@@ -859,20 +864,38 @@ function Overview({ onOpenMusic, onOpenChat }) {
           </div>
           <div style={{ fontSize: 11, color: "#7d8199" }}>Skala 0–100</div>
         </div>
-        <ResponsiveContainer width="100%" height={160}>
-          <AreaChart data={wave}>
-            <defs>
-              <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#5b8def" stopOpacity={0.5} />
-                <stop offset="100%" stopColor="#5b8def" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#1e2338" vertical={false} />
-            <XAxis dataKey="x" hide />
-            <YAxis orientation="right" domain={[0, 100]} stroke="#5b5f78" fontSize={11} tickLine={false} axisLine={false} />
-            <Area type="monotone" dataKey="y" stroke="#5b8def" fill="url(#waveGrad)" strokeWidth={2} isAnimationActive={true} />
-          </AreaChart>
-        </ResponsiveContainer>
+<ResponsiveContainer width="100%" height={160}>
+  <AreaChart data={wave} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+    <defs>
+      <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#5b8def" stopOpacity={0.5} />
+        <stop offset="100%" stopColor="#5b8def" stopOpacity={0} />
+      </linearGradient>
+    </defs>
+    <CartesianGrid stroke="#1e2338" vertical={false} />
+    <XAxis dataKey="x" hide />
+    {/* YAxis diset ketat 0 - 100 dengan tick tersusun rapi */}
+    <YAxis 
+      orientation="right" 
+      domain={[0, 100]} 
+      ticks={[0, 25, 50, 75, 100]}
+      stroke="#5b5f78" 
+      fontSize={11} 
+      tickLine={false} 
+      axisLine={false} 
+    />
+    {/* Mengubah monotone ke linear agar pergerakan commit akurat sesuai data tanpa kurva lengkung palsu */}
+    <Area 
+      type="linear" 
+      dataKey="y" 
+      stroke="#5b8def" 
+      fill="url(#waveGrad)" 
+      strokeWidth={2} 
+      isAnimationActive={true} 
+    />
+  </AreaChart>
+</ResponsiveContainer>
+
       </Card>
 
       <div className="grid-3" style={{ marginBottom: 14 }}>
