@@ -434,7 +434,9 @@ function Sidebar({ open, setOpen, tab, setTab }) {
   ];
 
   const storageItems = [
-    { id: "database", label: "Database", icon: Database },
+    { id: "supabase", label: "Supabase", icon: Database },
+    { id: "cloudflare", label: "Cloudflare", icon: Cloud },
+    { id: "backblaze", label: "Backblaze B2", icon: ShieldCheck },
   ];
 
   const handleSelectTab = (id) => {
@@ -524,6 +526,39 @@ function Sidebar({ open, setOpen, tab, setTab }) {
       </aside>
     </>
   );
+}
+
+export default function DashboardPage() {
+  const [tab, setTab] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const music = useMusicPlayer();
+  const chat = useChatBot();
+
+  return (
+    <div className="layout" style={{ position: "relative", minHeight: "100vh" }}>
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} tab={tab} setTab={setTab} />
+
+      <main className="main" style={{ paddingBottom: music.view === "mini" ? 70 : 0 }}>
+        <div className="topbar">
+          <button className="toggle-btn" onClick={() => setSidebarOpen((o) => !o)}>
+            <Menu size={18} />
+          </button>
+        </div>
+        {tab === "overview" && <Overview onOpenMusic={music.openSearch} onOpenChat={() => chat.setOpen(true)} />}
+        {tab === "projects" && <Projects />}
+        {tab === "vercel" && <VercelProject />}
+        {tab === "netlify" && <NetlifyProject />}
+        {tab === "supabase" && <SupabaseTab />}
+        {tab === "cloudflare" && <CloudflareTab />}
+        {tab === "backblaze" && <BackblazeTab />}
+      </main>
+
+      <MusicPlayerUI music={music} />
+      <ChatBotUI chat={chat} />
+    </div>
+  );
+}
+
 }
 
 function Card({ children, style }) {
