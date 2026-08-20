@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useEffect, useState, useRef } from "react";
 import {
@@ -526,39 +526,6 @@ function Sidebar({ open, setOpen, tab, setTab }) {
       </aside>
     </>
   );
-}
-
-export default function DashboardPage() {
-  const [tab, setTab] = useState("overview");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const music = useMusicPlayer();
-  const chat = useChatBot();
-
-  return (
-    <div className="layout" style={{ position: "relative", minHeight: "100vh" }}>
-      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} tab={tab} setTab={setTab} />
-
-      <main className="main" style={{ paddingBottom: music.view === "mini" ? 70 : 0 }}>
-        <div className="topbar">
-          <button className="toggle-btn" onClick={() => setSidebarOpen((o) => !o)}>
-            <Menu size={18} />
-          </button>
-        </div>
-        {tab === "overview" && <Overview onOpenMusic={music.openSearch} onOpenChat={() => chat.setOpen(true)} />}
-        {tab === "projects" && <Projects />}
-        {tab === "vercel" && <VercelProject />}
-        {tab === "netlify" && <NetlifyProject />}
-        {tab === "supabase" && <SupabaseTab />}
-        {tab === "cloudflare" && <CloudflareTab />}
-        {tab === "backblaze" && <BackblazeTab />}
-      </main>
-
-      <MusicPlayerUI music={music} />
-      <ChatBotUI chat={chat} />
-    </div>
-  );
-}
-
 }
 
 function Card({ children, style }) {
@@ -1980,6 +1947,7 @@ function SupabaseTab() {
 
   return (
     <div>
+      <SectionTitle title="Supabase Database" sub="Real-time DBMS Explorer & PostgreSQL Data Browser" />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 16 }}>
         <MiniStat icon={Database} tint="#3ecf8e" label="Supabase Table" value={sb?.tableName || "switch_state"} />
         <MiniStat icon={Activity} tint="#3ecf8e" label="Total Records" value={sb?.configured && sb.totalRows != null ? sb.totalRows : "-"} />
@@ -2088,6 +2056,7 @@ function CloudflareTab() {
 
   return (
     <div>
+      <SectionTitle title="Cloudflare Workers" sub="Serverless Edge Computing Console & Worker Metrics" />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 16 }}>
         <MiniStat icon={Cloud} tint="#f38020" label="Workers Active" value={cf?.configured ? `${activeWorkers}/${workers.length}` : "-"} />
         <MiniStat icon={Zap} tint="#f38020" label="Total Requests" value={cf?.configured ? totalRequests : "-"} />
@@ -2105,7 +2074,7 @@ function CloudflareTab() {
             </div>
           </div>
 
-          <span style={{ fontSize: 10, fontWeight: 700, background: "#f3802018", color: "#f38020", padding: "3px 8px", borderRadius: 6, border: "1px solid #f3802033" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, background: "#f3802018", color="#f38020", padding: "3px 8px", borderRadius: 6, border: "1px solid #f3802033" }}>
             GLOBAL EDGE NETWORK
           </span>
         </div>
@@ -2205,6 +2174,7 @@ function BackblazeTab() {
 
   return (
     <div>
+      <SectionTitle title="Backblaze B2 Storage" sub="Cloud Object Storage, S3 Endpoint, & status bucket" />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 14 }}>
         <MiniStat icon={Cloud} tint="#ff3b30" label="Total Buckets" value={b2?.configured ? buckets.length : "-"} />
         <MiniStat icon={CircleCheck} tint="#4dd6c4" label="S3 Compatible" value={b2?.configured ? "Active" : "-"} />
@@ -2295,59 +2265,6 @@ function BackblazeTab() {
   );
 }
 
-function DatabasePanel() {
-  const [activeSubTab, setActiveSubTab] = useState("supabase");
-
-  const subTabs = [
-    { id: "supabase", label: "Supabase", icon: Database, color: "#3ecf8e" },
-    { id: "cloudflare", label: "Cloudflare Workers", icon: Cloud, color: "#f38020" },
-    { id: "backblaze", label: "Backblaze B2", icon: ShieldCheck, color: "#ff3b30" },
-  ];
-
-  return (
-    <div>
-      <SectionTitle title="Database & Storage Services" sub="Real-time DBMS Explorer, Edge Gateway, & Cloud Object Storage" />
-
-      {/* Internal Sub-Tab Bar */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 18, borderBottom: "1px solid #1e2338", paddingBottom: 10, overflowX: "auto" }}>
-        {subTabs.map((t) => {
-          const Icon = t.icon;
-          const isActive = activeSubTab === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActiveSubTab(t.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 14px",
-                borderRadius: 10,
-                border: "1px solid",
-                borderColor: isActive ? t.color : "#1e2338",
-                background: isActive ? `${t.color}18` : "#12162a",
-                color: isActive ? t.color : "#8b8fa8",
-                fontSize: 12.5,
-                fontWeight: isActive ? 700 : 500,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <Icon size={15} color={isActive ? t.color : "#8b8fa8"} />
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {activeSubTab === "supabase" && <SupabaseTab />}
-      {activeSubTab === "cloudflare" && <CloudflareTab />}
-      {activeSubTab === "backblaze" && <BackblazeTab />}
-    </div>
-  );
-}
-
 function MiniStat({ icon: Icon, tint, label, value }) {
   return (
     <Card>
@@ -2380,7 +2297,9 @@ export default function DashboardPage() {
         {tab === "projects" && <Projects />}
         {tab === "vercel" && <VercelProject />}
         {tab === "netlify" && <NetlifyProject />}
-        {tab === "database" && <DatabasePanel />}
+        {tab === "supabase" && <SupabaseTab />}
+        {tab === "cloudflare" && <CloudflareTab />}
+        {tab === "backblaze" && <BackblazeTab />}
       </main>
 
       <MusicPlayerUI music={music} />
