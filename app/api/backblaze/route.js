@@ -1,85 +1,88 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 
 export async function GET() {
   try {
-    const keyId = (process.env.B2_APPLICATION_KEY_ID || "").trim();
-    const applicationKey = (process.env.B2_APPLICATION_KEY || "").trim();
+    const accessKeyId = (process.env.B2_APPLICATION_KEY_ID || "").trim();
+    const secretAccessKey = (process.env.B2_APPLICATION_KEY || "").trim();
 
-    if (!keyId || !applicationKey) {
+    if (!accessKeyId || !secretAccessKey) {
       return NextResponse.json(
-        {
-          configured: false,
-          health: "Unknown",
-          message: "B2_APPLICATION_KEY_ID atau B2_APPLICATION_KEY belum diset di Vercel.",
-          buckets: [],
-        },
+        { configured: false, health: "Unknown", message: "Key belum diatur.", buckets: [] },
         { status: 200 }
       );
     }
 
-    const credentials = Buffer.from(`${keyId}:${applicationKey}`).toString("base64");
+    // Menggunakan B2 S3 API Endpoint & AWS SigV4 Auth
+    const region = "us-west-004";
+    const host = `s3.${region}.backblazeb2.com`;
+    const endpoint = `https://${host}/`;
+    
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
+    const dateStamp = amzDate.substring(0, 8);
 
-    const authRes = await fetch("https://api.backblazeb2.com/b2api/v3/b2_authorize_account", {
+    const method = "GET";
+    const canonicalUri = "/";
+    const canonicalQuery = "";
+    const payloadHash = crypto.createHash("sha256").update("").digest("hex");
+
+    const canonicalHeaders = `host:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
+    const signedHeaders = "host;x-amz-content-sha256;x-amz-date";
+
+    const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuery}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+    
+    const algorithm = "AWS4-HMAC-SHA256";
+    const credentialScope = `${dateStamp}/${region}/s3/aws4_request`;
+    const stringToSign = `${algorithm}\n${amzDate}\n${credentialScope}\n${crypto.createHash("sha256").update(canonicalRequest).digest("hex")}`;
+
+    // Generate HMAC Keys
+    const kDate = crypto.createHmac("sha256", `AWS4${secretAccessKey}`).update(dateStamp).digest();
+    const kRegion = crypto.createHmac("sha256", kDate).update(region).digest();
+    const kService = crypto.createHmac("sha256", kRegion).update("s3").digest();
+    const kSigning = crypto.createHmac("sha256", kService).update("aws4_request").digest();
+    const signature = crypto.createHmac("sha256", kSigning).update(stringToSign).digest("hex");
+
+    const authorizationHeader = `${algorithm} Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+    const res = await fetch(endpoint, {
       method: "GET",
       headers: {
-        Authorization: `Basic ${credentials}`,
-        "User-Agent": "ProjectDashboard/1.0",
+        Host: host,
+        "x-amz-date": amzDate,
+        "x-amz-content-sha256": payloadHash,
+        Authorization: authorizationHeader,
       },
       cache: "no-store",
     });
 
-    const authData = await authRes.json();
+    const xmlText = await res.text();
 
-    // MENAMPILKAN DETAIL ERROR ASLI DARI BACKBLAZE
-    if (!authRes.ok || !authData.apiUrl) {
+    if (!res.ok) {
       return NextResponse.json(
         {
           configured: true,
           health: "Error",
-          error: `Backblaze Auth Error [${authData.code || authRes.status}]: ${authData.message || "Key ID atau Secret Key ditolak server B2"}`,
+          error: `S3 Error [HTTP ${res.status}]: Kredensial B2 ditolak via S3 API`,
           buckets: [],
         },
         { status: 200 }
       );
     }
 
-    const bucketsRes = await fetch(`${authData.apiUrl}/b2api/v3/b2_list_buckets`, {
-      method: "POST",
-      headers: {
-        Authorization: authData.authorizationToken,
-        "Content-Type": "application/json",
-        "User-Agent": "ProjectDashboard/1.0",
-      },
-      body: JSON.stringify({ accountId: authData.accountId }),
-      cache: "no-store",
-    });
+    // Parse XML bucket names
+    const bucketNames = [...xmlText.matchAll(/<Name>(.*?)<\/Name>/g)].map((m) => m[1]);
 
-    const bucketsData = await bucketsRes.json();
-
-    if (!bucketsRes.ok) {
-      return NextResponse.json(
-        {
-          configured: true,
-          health: "Error",
-          error: `Fetch Bucket Gagal: ${bucketsData.message || bucketsRes.statusText}`,
-          buckets: [],
-        },
-        { status: 200 }
-      );
-    }
-
-    const formattedBuckets = (bucketsData.buckets || []).map((b) => ({
-      id: b.bucketId,
-      name: b.bucketName,
-      type: b.bucketType,
-      s3Endpoint: `s3.${authData.apiUrl.replace("https://", "").split(".")[0]}.backblazeb2.com`,
+    const formattedBuckets = bucketNames.map((name, i) => ({
+      id: `b2-bucket-${i}`,
+      name: name,
+      type: "s3-compatible",
+      s3Endpoint: host,
     }));
 
     return NextResponse.json({
       configured: true,
       health: "Operational",
-      apiUrl: authData.apiUrl,
-      downloadUrl: authData.downloadUrl,
       buckets: formattedBuckets,
     });
   } catch (error) {
@@ -87,7 +90,7 @@ export async function GET() {
       {
         configured: true,
         health: "Error",
-        error: error.message || "Gagal terhubung ke Backblaze B2",
+        error: error.message || "Gagal menghubungkan ke B2",
         buckets: [],
       },
       { status: 500 }
