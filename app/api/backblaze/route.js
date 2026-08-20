@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    // Pakai replace untuk buang spasi, new line, atau kutip yang tak sengaja terikut
-    const keyId = (process.env.B2_APPLICATION_KEY_ID || "").replace(/['"\s]/g, "");
-    const applicationKey = (process.env.B2_APPLICATION_KEY || "").replace(/['"\s]/g, "");
+    // Bersihkan karakter spasi atau new line yang sering terikut saat copy-paste di HP
+    const keyId = process.env.B2_APPLICATION_KEY_ID?.trim();
+    const applicationKey = process.env.B2_APPLICATION_KEY?.trim();
 
     if (!keyId || !applicationKey) {
       return NextResponse.json(
@@ -18,14 +18,10 @@ export async function GET() {
       );
     }
 
-    // Opsi otentikasi resmi Backblaze B2 (Basic Auth: keyID:applicationKey)
-    const credentials = Buffer.from(`${keyId}:${applicationKey}`).toString("base64");
-
+    // Auth ke Backblaze menggunakan B2 Native API
+    const authHeader = Buffer.from(`${keyId}:${applicationKey}`).toString("base64");
     const authRes = await fetch("https://api.backblazeb2.com/b2api/v3/b2_authorize_account", {
-      method: "GET",
-      headers: {
-        Authorization: `Basic ${credentials}`,
-      },
+      headers: { Authorization: `Basic ${authHeader}` },
       cache: "no-store",
     });
 
@@ -36,14 +32,14 @@ export async function GET() {
         {
           configured: true,
           health: "Error",
-          error: `Backblaze Auth Gagal (${authData.code || authRes.status}): ${authData.message || "Key ID atau Application Key tidak diterima oleh server B2."}`,
+          error: `Backblaze Reject (HTTP ${authRes.status}): ${authData.message || authData.code || "Key tidak diterima"}`,
           buckets: [],
         },
         { status: 200 }
       );
     }
 
-    // Ambil list buckets menggunakan URL resmi yang dikembalikan authData
+    // Ambil daftar bucket
     const bucketsRes = await fetch(`${authData.apiUrl}/b2api/v3/b2_list_buckets`, {
       method: "POST",
       headers: {
@@ -61,7 +57,7 @@ export async function GET() {
         {
           configured: true,
           health: "Error",
-          error: `Fetch Bucket Gagal: ${bucketsData.message || bucketsRes.statusText}`,
+          error: `Gagal Ambil Bucket: ${bucketsData.message || bucketsRes.statusText}`,
           buckets: [],
         },
         { status: 200 }
