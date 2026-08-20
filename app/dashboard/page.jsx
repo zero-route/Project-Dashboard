@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useEffect, useState, useRef } from "react";
 import {
@@ -434,8 +434,9 @@ function Sidebar({ open, setOpen, tab, setTab }) {
     { id: "netlify", label: "Netlify", icon: Layers },
   ];
 
-  const bottomItems = [
+  const storageItems = [
     { id: "database", label: "Database", icon: Database },
+    { id: "backblaze", label: "Backblaze B2", icon: Cloud },
   ];
 
   const handleSelectTab = (id) => {
@@ -512,14 +513,15 @@ function Sidebar({ open, setOpen, tab, setTab }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {topItems.map(renderNavButton)}
 
-          {/* Section Grouping DEPLOYMENT */}
           <div style={{ marginTop: 14, marginBottom: 4, paddingLeft: 12, fontSize: 10.5, fontWeight: 700, color: "#5b5f78", letterSpacing: 0.8 }}>
             DEPLOYMENT
           </div>
           {deploymentItems.map(renderNavButton)}
 
-          <div style={{ marginTop: 10 }} />
-          {bottomItems.map(renderNavButton)}
+          <div style={{ marginTop: 14, marginBottom: 4, paddingLeft: 12, fontSize: 10.5, fontWeight: 700, color: "#5b5f78", letterSpacing: 0.8 }}>
+            DATABASE & STORAGE
+          </div>
+          {storageItems.map(renderNavButton)}
         </div>
       </aside>
     </>
@@ -1592,7 +1594,7 @@ function VercelProject() {
                 ) : (
                   p.deployments?.map((d) => (
                     <div key={d.id} style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 8, padding: "8px 10px" }}>
-                      <div style={{ display: "flex", justifyBetween: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                         <span style={{ fontSize: 10, fontWeight: 700, color: d.state === "READY" ? "#4dd6c4" : "#ff8a9b" }}>
                           {d.state}
                         </span>
@@ -1653,7 +1655,6 @@ function NetlifyProject() {
     <div>
       <SectionTitle title="Netlify" sub="Monitoring deployment, edge functions, & propagasi domain SSL" />
 
-      {/* Health Banner */}
       <div
         style={{
           background: "#12162a",
@@ -1689,7 +1690,6 @@ function NetlifyProject() {
         <span style={{ fontSize: 11, color: "#7d8199" }}>All Global CDN & Edge Functions Active</span>
       </div>
 
-      {/* Usage Bar */}
       <Card style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>Free Tier Usage</span>
@@ -1720,14 +1720,12 @@ function NetlifyProject() {
         </div>
       </Card>
 
-      {/* Mini Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 14 }}>
         <MiniStat icon={Layers} tint="#00c7b7" label="Total Sites" value={data ? projects.length : "-"} />
         <MiniStat icon={CircleCheck} tint="#4dd6c4" label="Status Live" value={data ? liveCount : "-"} />
         <MiniStat icon={Globe} tint="#c084fc" label="Domain Aktif" value={data ? liveCount : "-"} />
       </div>
 
-      {/* Search & Filter */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px" }}>
           <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
@@ -1768,7 +1766,6 @@ function NetlifyProject() {
         <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{data.error}</p></Card>
       )}
 
-      {/* Grid Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14, alignItems: "start" }}>
         {filteredProjects.map((p) => {
           const isExpanded = !!expandedProjects[p.id];
@@ -1821,7 +1818,6 @@ function NetlifyProject() {
                   Branch: <span style={{ color: "#e7e9f3", fontWeight: 600 }}>{p.build_settings?.branch || "main"}</span>
                 </div>
 
-                {/* Info Edge Functions & SSL Check */}
                 <div style={{ background: "#0e1120", border: "1px solid #1a1e33", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
                     <span style={{ color: "#7d8199", display: "flex", alignItems: "center", gap: 5 }}>
@@ -1853,7 +1849,6 @@ function NetlifyProject() {
                   <span>Provider: <strong style={{ color: "#a7abc2" }}>{p.build_settings?.provider?.toUpperCase() || "GITHUB"}</strong></span>
                 </div>
 
-                {/* Action Buttons: Kunjungi Web & History Toggle */}
                 <div style={{ display: "flex", gap: 6 }}>
                   <a
                     href={p.url}
@@ -1898,7 +1893,6 @@ function NetlifyProject() {
                 </div>
               </div>
 
-              {/* Log History Drawer (Slide Down + Fade In) */}
               <div
                 style={{
                   maxHeight: isExpanded ? "400px" : "0px",
@@ -1941,6 +1935,151 @@ function NetlifyProject() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function BackblazePanel() {
+  const [b2, setB2] = useState(null);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    fetch("/api/backblaze")
+      .then((r) => r.json())
+      .then(setB2)
+      .catch(() => {});
+  }, []);
+
+  const buckets = b2?.buckets || [];
+  const filteredBuckets = buckets.filter((b) =>
+    b.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div>
+      <SectionTitle title="Backblaze B2 Storage" sub="Cloud Object Storage, S3 Endpoint, & status bucket" />
+
+      <div
+        style={{
+          background: "#12162a",
+          border: "1px solid #1e2338",
+          borderRadius: 14,
+          padding: "12px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 14,
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ position: "relative", width: 10, height: 10 }}>
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "50%",
+                background: "#4dd6c4",
+                animation: "ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
+                opacity: 0.75,
+              }}
+            />
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4dd6c4" }} />
+          </div>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: "#e7e9f3" }}>
+            Backblaze B2 Health: {b2?.health || "Operational"}
+          </span>
+        </div>
+        <span style={{ fontSize: 11, color: "#7d8199" }}>Global Native & S3 Compatible API Operational</span>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 14 }}>
+        <MiniStat icon={Cloud} tint="#ff3b30" label="Total Buckets" value={b2?.configured ? buckets.length : "-"} />
+        <MiniStat icon={CircleCheck} tint="#4dd6c4" label="S3 Compatible" value={b2?.configured ? "Active" : "-"} />
+        <MiniStat icon={ShieldCheck} tint="#c084fc" label="Access Key" value="Read Only" />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px", marginBottom: 16 }}>
+        <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
+        <input
+          type="text"
+          placeholder="Cari bucket B2..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 12.5 }}
+        />
+      </div>
+
+      {!b2 && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data Backblaze B2...</p>}
+      {b2 && !b2.configured && (
+        <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{b2.message}</p></Card>
+      )}
+      {b2?.configured && b2.error && (
+        <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{b2.error}</p></Card>
+      )}
+
+      {b2?.configured && !b2.error && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+          {filteredBuckets.length === 0 ? (
+            <div style={{ fontSize: 12.5, color: "#7d8199" }}>Tidak ada bucket ditemukan.</div>
+          ) : (
+            filteredBuckets.map((b) => (
+              <div
+                key={b.id}
+                style={{
+                  background: "#12162a",
+                  border: "1px solid #1e2338",
+                  borderRadius: 16,
+                  padding: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    width: 120,
+                    height: 120,
+                    background: `radial-gradient(circle at top right, #ff3b3022, transparent 70%)`,
+                    pointerEvents: "none",
+                  }}
+                />
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: "#ff3b3018", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Cloud size={16} color="#ff3b30" />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {b.name}
+                    </span>
+                  </div>
+
+                  <span style={{ fontSize: 9, fontWeight: 700, background: "#5b8def22", color: "#5b8def", padding: "2px 6px", borderRadius: 4, border: "1px solid #5b8def44" }}>
+                    {b.type.toUpperCase()}
+                  </span>
+                </div>
+
+                <div style={{ background: "#0e1120", border: "1px solid #1a1e33", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ fontSize: 11, color: "#7d8199" }}>
+                    S3 Endpoint: <br />
+                    <span style={{ color: "#4dd6c4", fontWeight: 600, fontFamily: "monospace" }}>{b.s3Endpoint}</span>
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "#7d8199", borderTop: "1px solid #1a1e33", paddingTop: 6 }}>
+                    Bucket ID: <span style={{ color: "#a7abc2", fontFamily: "monospace" }}>{b.id}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -2183,6 +2322,7 @@ export default function DashboardPage() {
         {tab === "vercel" && <VercelProject />}
         {tab === "netlify" && <NetlifyProject />}
         {tab === "database" && <DatabasePanel />}
+        {tab === "backblaze" && <BackblazePanel />}
       </main>
 
       <MusicPlayerUI music={music} />
