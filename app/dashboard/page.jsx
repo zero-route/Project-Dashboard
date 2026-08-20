@@ -1,13 +1,12 @@
-"use client";
+ "use client";
 
 import { useEffect, useState, useRef } from "react";
 import {
-  Github, ExternalLink, Star, GitFork, Clock, AlertTriangle,
+  Github, ExternalLink, Star, GitFork, AlertTriangle,
   Activity, Zap, Database, Cloud, CircleCheck, Menu, Music2, Bot,
-  Globe, Radio, Copy, Search, SkipBack, SkipForward, Pause, Play, ChevronDown,
-  Send, Sparkles,
-  Sun, CloudRain, CloudSnow, CloudLightning, Wind, Droplets,
-  X, Layers, ShieldCheck, Code2
+  Globe, Search, SkipBack, SkipForward, Pause, Play, ChevronDown,
+  Send, Sparkles, Sun, CloudRain, CloudSnow, CloudLightning, Wind, Droplets,
+  Layers, ShieldCheck, Code2
 } from "lucide-react";
 import {
   AreaChart, Area,
@@ -155,7 +154,7 @@ function useMusicPlayer() {
 function MusicPlayerUI({ music }) {
   const { view, query, results, loading, error, search, playTrack, togglePlay,
     seek, handleNext, handlePrev, isPlaying, currentTime, duration,
-    currentTrack, setView, closePlayer, minimize } = music;
+    currentTrack, closePlayer, minimize } = music;
 
   const thumb = currentTrack?.snippet?.thumbnails?.medium?.url || currentTrack?.snippet?.thumbnails?.default?.url;
 
@@ -436,7 +435,6 @@ function Sidebar({ open, setOpen, tab, setTab }) {
 
   const storageItems = [
     { id: "database", label: "Database", icon: Database },
-    { id: "backblaze", label: "Backblaze B2", icon: Cloud },
   ];
 
   const handleSelectTab = (id) => {
@@ -1769,7 +1767,6 @@ function NetlifyProject() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14, alignItems: "start" }}>
         {filteredProjects.map((p) => {
           const isExpanded = !!expandedProjects[p.id];
-          const latestDeploy = p.deployments?.[0];
 
           return (
             <div
@@ -1939,176 +1936,21 @@ function NetlifyProject() {
   );
 }
 
-function BackblazePanel() {
-  const [b2, setB2] = useState(null);
-  const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    fetch("/api/backblaze")
-      .then((r) => r.json())
-      .then(setB2)
-      .catch(() => {});
-  }, []);
-
-  const buckets = b2?.buckets || [];
-  const filteredBuckets = buckets.filter((b) =>
-    b.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  return (
-    <div>
-      <SectionTitle title="Backblaze B2 Storage" sub="Cloud Object Storage, S3 Endpoint, & status bucket" />
-
-      <div
-        style={{
-          background: "#12162a",
-          border: "1px solid #1e2338",
-          borderRadius: 14,
-          padding: "12px 16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 14,
-          flexWrap: "wrap",
-          gap: 10,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ position: "relative", width: 10, height: 10 }}>
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                borderRadius: "50%",
-                background: "#4dd6c4",
-                animation: "ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
-                opacity: 0.75,
-              }}
-            />
-            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4dd6c4" }} />
-          </div>
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: "#e7e9f3" }}>
-            Backblaze B2 Health: {b2?.health || "Operational"}
-          </span>
-        </div>
-        <span style={{ fontSize: 11, color: "#7d8199" }}>Global Native & S3 Compatible API Operational</span>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 14 }}>
-        <MiniStat icon={Cloud} tint="#ff3b30" label="Total Buckets" value={b2?.configured ? buckets.length : "-"} />
-        <MiniStat icon={CircleCheck} tint="#4dd6c4" label="S3 Compatible" value={b2?.configured ? "Active" : "-"} />
-        <MiniStat icon={ShieldCheck} tint="#c084fc" label="Access Key" value="Read Only" />
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px", marginBottom: 16 }}>
-        <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
-        <input
-          type="text"
-          placeholder="Cari bucket B2..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 12.5 }}
-        />
-      </div>
-
-      {!b2 && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data Backblaze B2...</p>}
-      {b2 && !b2.configured && (
-        <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{b2.message}</p></Card>
-      )}
-      {b2?.configured && b2.error && (
-        <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{b2.error}</p></Card>
-      )}
-
-      {b2?.configured && !b2.error && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
-          {filteredBuckets.length === 0 ? (
-            <div style={{ fontSize: 12.5, color: "#7d8199" }}>Tidak ada bucket ditemukan.</div>
-          ) : (
-            filteredBuckets.map((b) => (
-              <div
-                key={b.id}
-                style={{
-                  background: "#12162a",
-                  border: "1px solid #1e2338",
-                  borderRadius: 16,
-                  padding: 16,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12,
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    right: 0,
-                    width: 120,
-                    height: 120,
-                    background: `radial-gradient(circle at top right, #ff3b3022, transparent 70%)`,
-                    pointerEvents: "none",
-                  }}
-                />
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                    <div style={{ width: 30, height: 30, borderRadius: 8, background: "#ff3b3018", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Cloud size={16} color="#ff3b30" />
-                    </div>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {b.name}
-                    </span>
-                  </div>
-
-                  <span style={{ fontSize: 9, fontWeight: 700, background: "#5b8def22", color: "#5b8def", padding: "2px 6px", borderRadius: 4, border: "1px solid #5b8def44" }}>
-                    {b.type.toUpperCase()}
-                  </span>
-                </div>
-
-                <div style={{ background: "#0e1120", border: "1px solid #1a1e33", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div style={{ fontSize: 11, color: "#7d8199" }}>
-                    S3 Endpoint: <br />
-                    <span style={{ color: "#4dd6c4", fontWeight: 600, fontFamily: "monospace" }}>{b.s3Endpoint}</span>
-                  </div>
-                  <div style={{ fontSize: 10.5, color: "#7d8199", borderTop: "1px solid #1a1e33", paddingTop: 6 }}>
-                    Bucket ID: <span style={{ color: "#a7abc2", fontFamily: "monospace" }}>{b.id}</span>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DatabasePanel() {
+function SupabaseTab() {
   const [sb, setSb] = useState(null);
-  const [cf, setCf] = useState(null);
 
   useEffect(() => {
     fetch("/api/supabase/status").then((r) => r.json()).then(setSb).catch(() => {});
-    fetch("/api/cloudflare/metrics").then((r) => r.json()).then(setCf).catch(() => {});
   }, []);
-
-  const workers = cf?.workers || [];
-  const totalRequests = workers.reduce((s, w) => s + (w.requests || 0), 0);
-  const activeWorkers = workers.filter((w) => (w.requests || 0) > 0).length;
 
   return (
     <div>
-      <SectionTitle title="Database & Edge Services" sub="Real-time DBMS Explorer & Cloudflare Workers Gateway" />
-
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 16 }}>
-        <MiniStat icon={Database} tint="#3ecf8e" label="Supabase Table" value={sb?.tableName || "absen"} />
+        <MiniStat icon={Database} tint="#3ecf8e" label="Supabase Table" value={sb?.tableName || "switch_state"} />
         <MiniStat icon={Activity} tint="#3ecf8e" label="Total Records" value={sb?.configured && sb.totalRows != null ? sb.totalRows : "-"} />
-        <MiniStat icon={Cloud} tint="#f38020" label="Workers Active" value={cf?.configured ? `${activeWorkers}/${workers.length}` : "-"} />
-        <MiniStat icon={Zap} tint="#f38020" label="Total Requests" value={cf?.configured ? totalRequests : "-"} />
       </div>
 
-      <Card style={{ marginBottom: 18, padding: 0, overflow: "hidden", border: "1px solid #1e2338" }}>
+      <Card style={{ padding: 0, overflow: "hidden", border: "1px solid #1e2338" }}>
         <div style={{ padding: "14px 18px", background: "#0e1120", borderBottom: "1px solid #1e2338", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 30, height: 30, borderRadius: 8, background: "#3ecf8e22", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -2194,6 +2036,27 @@ function DatabasePanel() {
           )}
         </div>
       </Card>
+    </div>
+  );
+}
+
+function CloudflareTab() {
+  const [cf, setCf] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/cloudflare/metrics").then((r) => r.json()).then(setCf).catch(() => {});
+  }, []);
+
+  const workers = cf?.workers || [];
+  const totalRequests = workers.reduce((s, w) => s + (w.requests || 0), 0);
+  const activeWorkers = workers.filter((w) => (w.requests || 0) > 0).length;
+
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 16 }}>
+        <MiniStat icon={Cloud} tint="#f38020" label="Workers Active" value={cf?.configured ? `${activeWorkers}/${workers.length}` : "-"} />
+        <MiniStat icon={Zap} tint="#f38020" label="Total Requests" value={cf?.configured ? totalRequests : "-"} />
+      </div>
 
       <Card style={{ padding: 0, overflow: "hidden", border: "1px solid #1e2338" }}>
         <div style={{ padding: "14px 18px", background: "#0e1120", borderBottom: "1px solid #1e2338", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -2289,6 +2152,167 @@ function DatabasePanel() {
   );
 }
 
+function BackblazeTab() {
+  const [b2, setB2] = useState(null);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    fetch("/api/backblaze")
+      .then((r) => r.json())
+      .then(setB2)
+      .catch(() => {});
+  }, []);
+
+  const buckets = b2?.buckets || [];
+  const filteredBuckets = buckets.filter((b) =>
+    b.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 14 }}>
+        <MiniStat icon={Cloud} tint="#ff3b30" label="Total Buckets" value={b2?.configured ? buckets.length : "-"} />
+        <MiniStat icon={CircleCheck} tint="#4dd6c4" label="S3 Compatible" value={b2?.configured ? "Active" : "-"} />
+        <MiniStat icon={ShieldCheck} tint="#c084fc" label="Access Key" value="Read Only" />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px", marginBottom: 16 }}>
+        <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
+        <input
+          type="text"
+          placeholder="Cari bucket B2..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 12.5 }}
+        />
+      </div>
+
+      {!b2 && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data Backblaze B2...</p>}
+      {b2 && !b2.configured && (
+        <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{b2.message}</p></Card>
+      )}
+      {b2?.configured && b2.error && (
+        <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{b2.error}</p></Card>
+      )}
+
+      {b2?.configured && !b2.error && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+          {filteredBuckets.length === 0 ? (
+            <div style={{ fontSize: 12.5, color: "#7d8199" }}>Tidak ada bucket ditemukan.</div>
+          ) : (
+            filteredBuckets.map((b) => (
+              <div
+                key={b.id}
+                style={{
+                  background: "#12162a",
+                  border: "1px solid #1e2338",
+                  borderRadius: 16,
+                  padding: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    width: 120,
+                    height: 120,
+                    background: `radial-gradient(circle at top right, #ff3b3022, transparent 70%)`,
+                    pointerEvents: "none",
+                  }}
+                />
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: "#ff3b3018", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Cloud size={16} color="#ff3b30" />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {b.name}
+                    </span>
+                  </div>
+
+                  <span style={{ fontSize: 9, fontWeight: 700, background: "#5b8def22", color: "#5b8def", padding: "2px 6px", borderRadius: 4, border: "1px solid #5b8def44" }}>
+                    {b.type.toUpperCase()}
+                  </span>
+                </div>
+
+                <div style={{ background: "#0e1120", border: "1px solid #1a1e33", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ fontSize: 11, color: "#7d8199" }}>
+                    S3 Endpoint: <br />
+                    <span style={{ color: "#4dd6c4", fontWeight: 600, fontFamily: "monospace" }}>{b.s3Endpoint}</span>
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "#7d8199", borderTop: "1px solid #1a1e33", paddingTop: 6 }}>
+                    Bucket ID: <span style={{ color: "#a7abc2", fontFamily: "monospace" }}>{b.id}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DatabasePanel() {
+  const [activeSubTab, setActiveSubTab] = useState("supabase");
+
+  const subTabs = [
+    { id: "supabase", label: "Supabase", icon: Database, color: "#3ecf8e" },
+    { id: "cloudflare", label: "Cloudflare Workers", icon: Cloud, color: "#f38020" },
+    { id: "backblaze", label: "Backblaze B2", icon: ShieldCheck, color: "#ff3b30" },
+  ];
+
+  return (
+    <div>
+      <SectionTitle title="Database & Storage Services" sub="Real-time DBMS Explorer, Edge Gateway, & Cloud Object Storage" />
+
+      {/* Internal Sub-Tab Bar */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 18, borderBottom: "1px solid #1e2338", paddingBottom: 10, overflowX: "auto" }}>
+        {subTabs.map((t) => {
+          const Icon = t.icon;
+          const isActive = activeSubTab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setActiveSubTab(t.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 14px",
+                borderRadius: 10,
+                border: "1px solid",
+                borderColor: isActive ? t.color : "#1e2338",
+                background: isActive ? `${t.color}18` : "#12162a",
+                color: isActive ? t.color : "#8b8fa8",
+                fontSize: 12.5,
+                fontWeight: isActive ? 700 : 500,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <Icon size={15} color={isActive ? t.color : "#8b8fa8"} />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeSubTab === "supabase" && <SupabaseTab />}
+      {activeSubTab === "cloudflare" && <CloudflareTab />}
+      {activeSubTab === "backblaze" && <BackblazeTab />}
+    </div>
+  );
+}
+
 function MiniStat({ icon: Icon, tint, label, value }) {
   return (
     <Card>
@@ -2322,7 +2346,6 @@ export default function DashboardPage() {
         {tab === "vercel" && <VercelProject />}
         {tab === "netlify" && <NetlifyProject />}
         {tab === "database" && <DatabasePanel />}
-        {tab === "backblaze" && <BackblazePanel />}
       </main>
 
       <MusicPlayerUI music={music} />
