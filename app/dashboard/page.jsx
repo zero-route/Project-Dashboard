@@ -557,6 +557,43 @@ function IconStatCard({ icon: Icon, label, tint, note }) {
   );
 }
 
+function DonutCard({ title, data, centerValue, centerLabel }) {
+  return (
+    <Card style={{ textAlign: "center", position: "relative" }}>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>{title}</div>
+      <div style={{ position: "relative", width: "100%", height: 140 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data || []}
+              cx="50%"
+              cy="50%"
+              innerRadius={42}
+              outerRadius={58}
+              paddingAngle={2}
+              dataKey="value"
+            >
+              {(data || []).map((_, index) => (
+                <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        <div style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          pointerEvents: "none"
+        }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: "#e7e9f3" }}>{centerValue}</div>
+          <div style={{ fontSize: 9.5, color: "#7d8199" }}>{centerLabel}</div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function LatencyOverviewCard({ latency }) {
   const items = [
     { name: "Supabase DB", ms: latency.supabase, color: "#3ecf8e" },
@@ -566,9 +603,9 @@ function LatencyOverviewCard({ latency }) {
 
   const getStatusColor = (ms) => {
     if (!ms) return "#7d8199";
-    if (ms < 300) return "#4dd6c4"; // Fast
-    if (ms < 800) return "#facc15"; // Medium
-    return "#ff8a9b"; // Slow
+    if (ms < 300) return "#4dd6c4";
+    if (ms < 800) return "#facc15";
+    return "#ff8a9b";
   };
 
   return (
@@ -581,7 +618,6 @@ function LatencyOverviewCard({ latency }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {items.map((it) => {
           const statusColor = getStatusColor(it.ms);
-          // Scale max 1500ms
           const pct = Math.min(100, Math.round(((it.ms || 0) / 1200) * 100));
 
           return (
@@ -611,7 +647,6 @@ function LatencyOverviewCard({ latency }) {
   );
 }
 
-
 function useClock() {
   const [now, setNow] = useState(null);
   useEffect(() => {
@@ -637,14 +672,11 @@ function useActivityWave() {
           const rawValues = points.map((p) => p.y);
           const maxVal = Math.max(...rawValues, 1);
 
-          // 1. Skala murni ke 0-100
           const scaledRaw = rawValues.map((v) => Math.min(100, Math.round((v / maxVal) * 100)));
 
-          // 2. Terapkan Moving Average agar pergerakan kurva mulus & tidak anjlok mendadak di ujung
           const smoothed = scaledRaw.map((val, idx, arr) => {
             if (idx === 0) return val;
             const prev = arr[idx - 1];
-            // Mencegah penurunan drastis di titik terakhir jika hari ini commit masih berjalan
             if (idx === arr.length - 1 && val < prev) {
               return Math.round((prev * 0.7) + (val * 0.3));
             }
@@ -665,7 +697,6 @@ function useActivityWave() {
 
   return { data, source };
 }
-
 
 function useApiLatency() {
   const [latency, setLatency] = useState({});
@@ -900,36 +931,35 @@ function Overview({ onOpenMusic, onOpenChat }) {
           </div>
           <div style={{ fontSize: 11, color: "#7d8199" }}>Skala 0–100</div>
         </div>
-<ResponsiveContainer width="100%" height={160}>
-  <AreaChart data={wave} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-    <defs>
-      <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#5b8def" stopOpacity={0.5} />
-        <stop offset="100%" stopColor="#5b8def" stopOpacity={0} />
-      </linearGradient>
-    </defs>
-    <CartesianGrid stroke="#1e2338" vertical={false} />
-    <XAxis dataKey="x" hide />
-    <YAxis 
-      orientation="right" 
-      domain={[0, 100]} 
-      ticks={[0, 25, 50, 75, 100]}
-      stroke="#5b5f78" 
-      fontSize={11} 
-      tickLine={false} 
-      axisLine={false} 
-    />
-    {/* Kembali menggunakan monotone agar kurva mulus melengkung */}
-    <Area 
-      type="monotone" 
-      dataKey="y" 
-      stroke="#5b8def" 
-      fill="url(#waveGrad)" 
-      strokeWidth={2.5} 
-      isAnimationActive={true} 
-    />
-  </AreaChart>
-</ResponsiveContainer>
+        <ResponsiveContainer width="100%" height={160}>
+          <AreaChart data={wave} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#5b8def" stopOpacity={0.5} />
+                <stop offset="100%" stopColor="#5b8def" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke="#1e2338" vertical={false} />
+            <XAxis dataKey="x" hide />
+            <YAxis 
+              orientation="right" 
+              domain={[0, 100]} 
+              ticks={[0, 25, 50, 75, 100]}
+              stroke="#5b5f78" 
+              fontSize={11} 
+              tickLine={false} 
+              axisLine={false} 
+            />
+            <Area 
+              type="monotone" 
+              dataKey="y" 
+              stroke="#5b8def" 
+              fill="url(#waveGrad)" 
+              strokeWidth={2.5} 
+              isAnimationActive={true} 
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </Card>
 
       <div className="grid-3" style={{ marginBottom: 14 }}>
@@ -1244,26 +1274,26 @@ function Projects() {
                     >
                       Live Demo <ExternalLink size={10} />
                     </a>
-                 ) : r.isPrivate ? (
-         <button
-           disabled
-           style={{
-           flex: 1,
-           display: "flex",
-           alignItems: "center",
-           justifyContent: "center",
-           gap: 4,
-           background: "#f34b7d",
-           border: "none",
-           color: "#0a0c14",
-           padding: "6px 8px",
-           borderRadius: 6,
-           fontSize: 11,
-           fontWeight: 700,
-           cursor: "not-allowed",
-           }}
-      >
-          Repo Private
+                  ) : r.isPrivate ? (
+                    <button
+                      disabled
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 4,
+                        background: "#f34b7d",
+                        border: "none",
+                        color: "#0a0c14",
+                        padding: "6px 8px",
+                        borderRadius: 6,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: "not-allowed",
+                      }}
+                    >
+                      Repo Private
                     </button>
                   ) : (
                     <button
@@ -1392,7 +1422,6 @@ function VercelProject() {
     <div>
       <SectionTitle title="Project Vercel" sub="Monitoring deployment, status domain, & usage" />
 
-      {/* 1. SYSTEM HEALTH & USAGE */}
       <div
         style={{
           background: "#12162a",
@@ -1458,14 +1487,12 @@ function VercelProject() {
         </div>
       </Card>
 
-      {/* 2. MINI STATS */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 14 }}>
         <MiniStat icon={Zap} tint="#5b8def" label="Total Project" value={data?.configured ? projects.length : "-"} />
         <MiniStat icon={CircleCheck} tint="#4dd6c4" label="Status Live" value={data?.configured ? readyCount : "-"} />
         <MiniStat icon={Globe} tint="#c084fc" label="Domain Aktif" value={data?.configured ? projects.filter((p) => !!p.url).length : "-"} />
       </div>
 
-      {/* 3. SEARCH & FILTER CHIPS */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px" }}>
           <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
@@ -1506,7 +1533,6 @@ function VercelProject() {
         <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{data.message}</p></Card>
       )}
 
-      {/* 4. GRID CARDS WITH GLOW & RICH DETAILS */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14, alignItems: "start" }}>
         {filteredProjects.map((p) => {
           const isReady = p.status === "READY";
@@ -1528,7 +1554,6 @@ function VercelProject() {
                 overflow: "hidden",
               }}
             >
-              {/* RADIAL GLOW BACKGROUND */}
               <div
                 style={{
                   position: "absolute",
@@ -1642,7 +1667,6 @@ function VercelProject() {
                 </div>
               </div>
 
-              {/* ACCORDION SLIDE RIWAYAT DEPLOYMENT */}
               <div
                 style={{
                   maxHeight: isExpanded ? "400px" : "0px",
@@ -1706,14 +1730,12 @@ function DatabasePanel() {
 
   const workers = cf?.workers || [];
   const totalRequests = workers.reduce((s, w) => s + (w.requests || 0), 0);
-  const totalErrors = workers.reduce((s, w) => s + (w.errors || 0), 0);
   const activeWorkers = workers.filter((w) => (w.requests || 0) > 0).length;
 
   return (
     <div>
       <SectionTitle title="Database & Edge Services" sub="Real-time DBMS Explorer & Cloudflare Workers Gateway" />
 
-      {/* MINI STATS OVERVIEW */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 16 }}>
         <MiniStat icon={Database} tint="#3ecf8e" label="Supabase Table" value={sb?.tableName || "absen"} />
         <MiniStat icon={Activity} tint="#3ecf8e" label="Total Records" value={sb?.configured && sb.totalRows != null ? sb.totalRows : "-"} />
@@ -1721,7 +1743,6 @@ function DatabasePanel() {
         <MiniStat icon={Zap} tint="#f38020" label="Total Requests" value={cf?.configured ? totalRequests : "-"} />
       </div>
 
-      {/* 1. SUPABASE DATABASE EXPLORER */}
       <Card style={{ marginBottom: 18, padding: 0, overflow: "hidden", border: "1px solid #1e2338" }}>
         <div style={{ padding: "14px 18px", background: "#0e1120", borderBottom: "1px solid #1e2338", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1760,7 +1781,6 @@ function DatabasePanel() {
                 <span>Sorted: Newest First</span>
               </div>
 
-              {/* TABLE DATA SYSTEM */}
               <div style={{ overflowX: "auto", border: "1px solid #1e2338", borderRadius: 10, background: "#0a0c14" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 11.5 }}>
                   <thead>
@@ -1810,7 +1830,6 @@ function DatabasePanel() {
         </div>
       </Card>
 
-      {/* 2. CLOUDFLARE WORKERS GATEWAY */}
       <Card style={{ padding: 0, overflow: "hidden", border: "1px solid #1e2338" }}>
         <div style={{ padding: "14px 18px", background: "#0e1120", borderBottom: "1px solid #1e2338", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
