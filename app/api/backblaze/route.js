@@ -2,51 +2,54 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    // Bersihkan karakter spasi atau new line yang sering terikut saat copy-paste di HP
-    const keyId = process.env.B2_APPLICATION_KEY_ID?.trim();
-    const applicationKey = process.env.B2_APPLICATION_KEY?.trim();
+    const keyId = (process.env.B2_APPLICATION_KEY_ID || "").trim();
+    const applicationKey = (process.env.B2_APPLICATION_KEY || "").trim();
 
     if (!keyId || !applicationKey) {
       return NextResponse.json(
         {
           configured: false,
           health: "Unknown",
-          message: "Key ID atau Application Key belum diset di Vercel.",
+          message: "B2_APPLICATION_KEY_ID atau B2_APPLICATION_KEY belum diset di Vercel.",
           buckets: [],
         },
         { status: 200 }
       );
     }
 
-    // Auth ke Backblaze menggunakan B2 Native API
-    const authHeader = Buffer.from(`${keyId}:${applicationKey}`).toString("base64");
+    const credentials = Buffer.from(`${keyId}:${applicationKey}`).toString("base64");
+
+    // Wajib sertakan User-Agent agar request dari Vercel/Node.js diterima Backblaze
     const authRes = await fetch("https://api.backblazeb2.com/b2api/v3/b2_authorize_account", {
-      headers: { Authorization: `Basic ${authHeader}` },
+      method: "GET",
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        "User-Agent": "ProjectDashboard/1.0",
+      },
       cache: "no-store",
     });
 
     const authData = await authRes.json();
 
-    // Ganti baris pengecekan error Auth dengan ini sementara:
-if (!authRes.ok || !authData.apiUrl) {
-  return NextResponse.json(
-    {
-      configured: true,
-      health: "Error",
-      error: `Auth Gagal (${authData.code}): KeyID len=${keyId.length}, AppKey len=${applicationKey.length}. Msg: ${authData.message}`,
-      buckets: [],
-    },
-    { status: 200 }
-  );
-}
+    if (!authRes.ok || !authData.apiUrl) {
+      return NextResponse.json(
+        {
+          configured: true,
+          health: "Error",
+          error: `Backblaze Reject (${authData.code || authRes.status}): ${authData.message || "Gagal Autentikasi API Key"}`,
+          buckets: [],
+        },
+        { status: 200 }
+      );
+    }
 
-
-    // Ambil daftar bucket
+    // Ambil daftar bucket menggunakan token autentikasi yang valid
     const bucketsRes = await fetch(`${authData.apiUrl}/b2api/v3/b2_list_buckets`, {
       method: "POST",
       headers: {
         Authorization: authData.authorizationToken,
         "Content-Type": "application/json",
+        "User-Agent": "ProjectDashboard/1.0",
       },
       body: JSON.stringify({ accountId: authData.accountId }),
       cache: "no-store",
@@ -59,7 +62,7 @@ if (!authRes.ok || !authData.apiUrl) {
         {
           configured: true,
           health: "Error",
-          error: `Gagal Ambil Bucket: ${bucketsData.message || bucketsRes.statusText}`,
+          error: `Fetch Bucket Gagal: ${bucketsData.message || bucketsRes.statusText}`,
           buckets: [],
         },
         { status: 200 }
