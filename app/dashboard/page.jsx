@@ -2074,7 +2074,7 @@ function CloudflareTab() {
             </div>
           </div>
 
-          <span style={{ fontSize: 10, fontWeight: 700, background: "#f3802018", color="#f38020", padding: "3px 8px", borderRadius: 6, border: "1px solid #f3802033" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, background: "#f3802018", color: "#f38020", padding: "3px 8px", borderRadius: 6, border: "1px solid #f3802033" }}>
             GLOBAL EDGE NETWORK
           </span>
         </div>
