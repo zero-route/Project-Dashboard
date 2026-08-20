@@ -10,12 +10,10 @@ import {
   X,
 } from "lucide-react";
 import {
-  AreaChart, Area, PieChart, Pie, Cell,
-  ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
-  BarChart, Bar,
+  AreaChart, Area,
+  ResponsiveContainer, XAxis, YAxis, CartesianGrid,
 } from "recharts";
 
-const PIE_COLORS = ["#c084fc", "#5b8def", "#4dd6c4", "#ff8a5b", "#f472b6", "#facc15"];
 const GEMINI_CHAT_API = "https://dashboard-chat-bot.iostream911.workers.dev/";
 const YT_SEARCH_API = "https://yt-music-portofolio.iostream911.workers.dev/";
 
@@ -557,48 +555,11 @@ function IconStatCard({ icon: Icon, label, tint, note }) {
   );
 }
 
-function DonutCard({ title, data, centerValue, centerLabel }) {
-  return (
-    <Card style={{ textAlign: "center", position: "relative" }}>
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>{title}</div>
-      <div style={{ position: "relative", width: "100%", height: 140 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data || []}
-              cx="50%"
-              cy="50%"
-              innerRadius={42}
-              outerRadius={58}
-              paddingAngle={2}
-              dataKey="value"
-            >
-              {(data || []).map((_, index) => (
-                <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-        <div style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          pointerEvents: "none"
-        }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "#e7e9f3" }}>{centerValue}</div>
-          <div style={{ fontSize: 9.5, color: "#7d8199" }}>{centerLabel}</div>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 function LatencyOverviewCard({ latency }) {
   const items = [
-    { name: "Supabase DB", ms: latency.supabase, color: "#3ecf8e" },
-    { name: "Vercel Edge", ms: latency.vercel, color: "#5b8def" },
-    { name: "Cloudflare Workers", ms: latency.cloudflare, color: "#f38020" },
+    { name: "Supabase DB", ms: latency.supabase },
+    { name: "Vercel Edge", ms: latency.vercel },
+    { name: "Cloudflare Workers", ms: latency.cloudflare },
   ];
 
   const getStatusColor = (ms) => {
@@ -610,31 +571,43 @@ function LatencyOverviewCard({ latency }) {
 
   return (
     <Card style={{ marginBottom: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>API Latency & Health</span>
         <span style={{ fontSize: 10.5, color: "#7d8199" }}>Real-time Ping</span>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {items.map((it) => {
           const statusColor = getStatusColor(it.ms);
           const pct = Math.min(100, Math.round(((it.ms || 0) / 1200) * 100));
 
           return (
-            <div key={it.name}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
-                <span style={{ color: "#a7abc2", fontWeight: 500 }}>{it.name}</span>
-                <span style={{ fontWeight: 700, color: statusColor }}>
+            <div 
+              key={it.name}
+              style={{
+                background: "#0e1120",
+                border: "1px solid #1e2338",
+                borderRadius: 12,
+                padding: "12px 14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5 }}>
+                <span style={{ color: "#e7e9f3", fontWeight: 600 }}>{it.name}</span>
+                <span style={{ fontWeight: 700, color: statusColor, fontSize: 13 }}>
                   {it.ms ? `${it.ms} ms` : "Pinging..."}
                 </span>
               </div>
-              <div style={{ height: 6, width: "100%", background: "#0e1120", borderRadius: 4, overflow: "hidden" }}>
+
+              <div style={{ height: 8, width: "100%", background: "#12162a", borderRadius: 6, overflow: "hidden" }}>
                 <div 
                   style={{ 
                     height: "100%", 
                     width: `${pct || 5}%`, 
                     background: statusColor, 
-                    borderRadius: 4,
+                    borderRadius: 6,
                     transition: "width 0.5s ease-in-out" 
                   }} 
                 />
@@ -861,24 +834,6 @@ function Overview({ onOpenMusic, onOpenChat }) {
     : "--:--:--";
   const dateStr = now ? now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" }) : "";
 
-  const LATENCY_CAP = 800;
-  const latencyDonut = (label, ms) => {
-    if (ms == null) return { name: label, data: [] };
-    const pct = Math.min(100, Math.round((ms / LATENCY_CAP) * 100));
-    return {
-      name: label,
-      centerValue: `${ms} ms`,
-      data: [
-        { name: "Respons", value: pct },
-        { name: "Sisa skala", value: 100 - pct },
-      ],
-    };
-  };
-
-  const donutSupabase = latencyDonut("Latency Supabase", latency.supabase);
-  const donutVercel = latencyDonut("Latency Vercel", latency.vercel);
-  const donutCloudflare = latencyDonut("Latency Cloudflare", latency.cloudflare);
-
   return (
     <div>
       <SectionTitle title="Ringkasan Monitoring" sub="Status seluruh layanan yang dipantau" />
@@ -962,11 +917,7 @@ function Overview({ onOpenMusic, onOpenChat }) {
         </ResponsiveContainer>
       </Card>
 
-      <div className="grid-3" style={{ marginBottom: 14 }}>
-        <DonutCard title={donutSupabase.name} data={donutSupabase.data} centerValue={donutSupabase.centerValue ?? "-"} centerLabel="dari Supabase" />
-        <DonutCard title={donutVercel.name} data={donutVercel.data} centerValue={donutVercel.centerValue ?? "-"} centerLabel="dari Vercel" />
-        <DonutCard title={donutCloudflare.name} data={donutCloudflare.data} centerValue={donutCloudflare.centerValue ?? "-"} centerLabel="dari Cloudflare" />
-      </div>
+      <LatencyOverviewCard latency={latency} />
 
       <Card>
         <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Detail Status Koneksi</div>
