@@ -27,17 +27,19 @@ export async function GET() {
 
     const authData = await authRes.json();
 
-    if (!authRes.ok || !authData.apiUrl) {
-      return NextResponse.json(
-        {
-          configured: true,
-          health: "Error",
-          error: `Backblaze Reject (HTTP ${authRes.status}): ${authData.message || authData.code || "Key tidak diterima"}`,
-          buckets: [],
-        },
-        { status: 200 }
-      );
-    }
+    // Ganti baris pengecekan error Auth dengan ini sementara:
+if (!authRes.ok || !authData.apiUrl) {
+  return NextResponse.json(
+    {
+      configured: true,
+      health: "Error",
+      error: `Auth Gagal (${authData.code}): KeyID len=${keyId.length}, AppKey len=${applicationKey.length}. Msg: ${authData.message}`,
+      buckets: [],
+    },
+    { status: 200 }
+  );
+}
+
 
     // Ambil daftar bucket
     const bucketsRes = await fetch(`${authData.apiUrl}/b2api/v3/b2_list_buckets`, {
