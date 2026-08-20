@@ -569,7 +569,7 @@ function LatencyOverviewCard({ latency }) {
         <span style={{ fontSize: 10.5, color: "#7d8199" }}>Real-time Ping</span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+      <div className="grid-3">
         {items.map((it) => {
           const fillPercentage = Math.min(100, Math.round(((it.ms || 0) / 1000) * 100));
           const fillColor = "#4dd6c4";
@@ -612,6 +612,7 @@ function LatencyOverviewCard({ latency }) {
     </Card>
   );
 }
+
 
 function useClock() {
   const [now, setNow] = useState(null);
