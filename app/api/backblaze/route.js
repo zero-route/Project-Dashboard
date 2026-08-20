@@ -19,7 +19,6 @@ export async function GET() {
 
     const credentials = Buffer.from(`${keyId}:${applicationKey}`).toString("base64");
 
-    // Wajib sertakan User-Agent agar request dari Vercel/Node.js diterima Backblaze
     const authRes = await fetch("https://api.backblazeb2.com/b2api/v3/b2_authorize_account", {
       method: "GET",
       headers: {
@@ -31,19 +30,19 @@ export async function GET() {
 
     const authData = await authRes.json();
 
+    // MENAMPILKAN DETAIL ERROR ASLI DARI BACKBLAZE
     if (!authRes.ok || !authData.apiUrl) {
       return NextResponse.json(
         {
           configured: true,
           health: "Error",
-          error: `Backblaze Reject (${authData.code || authRes.status}): ${authData.message || "Gagal Autentikasi API Key"}`,
+          error: `Backblaze Auth Error [${authData.code || authRes.status}]: ${authData.message || "Key ID atau Secret Key ditolak server B2"}`,
           buckets: [],
         },
         { status: 200 }
       );
     }
 
-    // Ambil daftar bucket menggunakan token autentikasi yang valid
     const bucketsRes = await fetch(`${authData.apiUrl}/b2api/v3/b2_list_buckets`, {
       method: "POST",
       headers: {
