@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import { useEffect, useState, useRef } from "react";
 import {
@@ -269,7 +269,7 @@ function MusicPlayerUI({ music }) {
                 <button onClick={togglePlay} style={{ width: 50, height: 50, borderRadius: "50%", background: "#e7e9f3", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                   {isPlaying ? <Pause size={22} color="#0a0c14" fill="#0a0c14" /> : <Play size={22} color="#0a0c14" fill="#0a0c14" style={{ marginLeft: 2 }} />}
                 </button>
-                <button onClick={handleNext} style={{ background: "none", border: "none", color="#e7e9f3", cursor: "pointer" }}>
+                <button onClick={handleNext} style={{ background: "none", border: "none", color: "#e7e9f3", cursor: "pointer" }}>
                   <SkipForward size={22} fill="#e7e9f3" />
                 </button>
               </div>
@@ -569,7 +569,7 @@ function LatencyOverviewCard({ latency }) {
         <span style={{ fontSize: 10.5, color: "#7d8199" }}>Real-time Ping</span>
       </div>
 
-      <div className="grid-3">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
         {items.map((it) => {
           const fillPercentage = Math.min(100, Math.round(((it.ms || 0) / 1000) * 100));
           const fillColor = "#4dd6c4";
@@ -578,6 +578,8 @@ function LatencyOverviewCard({ latency }) {
             <div 
               key={it.name}
               style={{
+                flex: "1 1 150px",
+                minWidth: 150,
                 background: "#0e1120",
                 border: "1px solid #1e2338",
                 borderRadius: 12,
@@ -612,7 +614,6 @@ function LatencyOverviewCard({ latency }) {
     </Card>
   );
 }
-
 
 function useClock() {
   const [now, setNow] = useState(null);
