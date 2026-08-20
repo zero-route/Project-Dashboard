@@ -7,7 +7,7 @@ import {
   Globe, Radio, Copy, Search, SkipBack, SkipForward, Pause, Play, ChevronDown,
   Send, Sparkles,
   Sun, CloudRain, CloudSnow, CloudLightning, Wind, Droplets,
-  X,
+  X, Layers, ShieldCheck, Code2
 } from "lucide-react";
 import {
   AreaChart, Area,
@@ -424,10 +424,17 @@ function ChatBotUI({ chat }) {
 }
 
 function Sidebar({ open, setOpen, tab, setTab }) {
-  const items = [
+  const topItems = [
     { id: "overview", label: "Ringkasan", icon: Activity },
     { id: "projects", label: "Project GitHub", icon: Github },
-    { id: "vercel", label: "Project Vercel", icon: Zap },
+  ];
+
+  const deploymentItems = [
+    { id: "vercel", label: "Vercel", icon: Zap },
+    { id: "netlify", label: "Netlify", icon: Layers },
+  ];
+
+  const bottomItems = [
     { id: "database", label: "Database", icon: Database },
   ];
 
@@ -435,6 +442,31 @@ function Sidebar({ open, setOpen, tab, setTab }) {
     setTab(id);
     setOpen(false);
   };
+
+  const renderNavButton = ({ id, label, icon: Icon }) => (
+    <button
+      key={id}
+      onClick={() => handleSelectTab(id)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "10px 14px",
+        borderRadius: 10,
+        border: "none",
+        cursor: "pointer",
+        textAlign: "left",
+        background: tab === id ? "rgba(91, 141, 239, 0.15)" : "transparent",
+        color: tab === id ? "#5b8def" : "#8b8fa8",
+        fontSize: 13,
+        fontWeight: tab === id ? 600 : 500,
+        width: "100%",
+        transition: "all 0.2s ease",
+      }}
+    >
+      <Icon size={16} /> {label}
+    </button>
+  );
 
   return (
     <>
@@ -477,31 +509,17 @@ function Sidebar({ open, setOpen, tab, setTab }) {
           <span style={{ fontWeight: 700, fontSize: 14, color: "#e7e9f3" }}>Project Monitoring</span>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {items.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => handleSelectTab(id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "11px 14px",
-                borderRadius: 10,
-                border: "none",
-                cursor: "pointer",
-                textAlign: "left",
-                background: tab === id ? "rgba(91, 141, 239, 0.15)" : "transparent",
-                color: tab === id ? "#5b8def" : "#8b8fa8",
-                fontSize: 13,
-                fontWeight: tab === id ? 600 : 500,
-                width: "100%",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <Icon size={16} /> {label}
-            </button>
-          ))}
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {topItems.map(renderNavButton)}
+
+          {/* Section Grouping DEPLOYMENT */}
+          <div style={{ marginTop: 14, marginBottom: 4, paddingLeft: 12, fontSize: 10.5, fontWeight: 700, color: "#5b5f78", letterSpacing: 0.8 }}>
+            DEPLOYMENT
+          </div>
+          {deploymentItems.map(renderNavButton)}
+
+          <div style={{ marginTop: 10 }} />
+          {bottomItems.map(renderNavButton)}
         </div>
       </aside>
     </>
@@ -1273,68 +1291,6 @@ function Projects() {
   );
 }
 
-function PulseMonitor({ alive, label }) {
-  return (
-    <div style={{
-      background: "linear-gradient(135deg, #0e1633, #16224a)",
-      border: "1px solid #22284a", borderRadius: 18, padding: "20px 22px",
-      display: "flex", alignItems: "center", gap: 18, overflow: "hidden", position: "relative",
-    }}>
-      <div style={{
-        width: 46, height: 46, borderRadius: "50%", flexShrink: 0,
-        background: alive ? "#4dd6c422" : "#7d819922",
-        display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
-      }}>
-        <span style={{
-          position: "absolute", inset: 0, borderRadius: "50%",
-          border: `2px solid ${alive ? "#4dd6c4" : "#7d8199"}`,
-          animation: alive ? "pulseRing 1.6s ease-out infinite" : "none",
-        }} />
-        <Radio size={20} color={alive ? "#4dd6c4" : "#7d8199"} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>
-          {alive ? "Sinyal Hidup" : "Sinyal Terputus"}
-        </div>
-        <div style={{ fontSize: 11.5, color: "#7d8199", marginTop: 2 }}>{label}</div>
-      </div>
-      <svg width="120" height="40" viewBox="0 0 120 40" style={{ flexShrink: 0, opacity: alive ? 1 : 0.3 }}>
-        <polyline
-          points="0,20 15,20 22,6 28,34 34,20 45,20 50,12 55,28 60,20 120,20"
-          fill="none" stroke="#4dd6c4" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"
-          style={{ animation: alive ? "ekgMove 2.4s linear infinite" : "none" }}
-        />
-      </svg>
-      <style>{`
-        @keyframes pulseRing { 0% { transform: scale(0.8); opacity: 0.9; } 100% { transform: scale(1.8); opacity: 0; } }
-        @keyframes ekgMove { 0% { stroke-dasharray: 0 300; } 60% { stroke-dasharray: 300 0; } 100% { stroke-dasharray: 300 0; } }
-      `}</style>
-    </div>
-  );
-}
-
-function InfoRow({ icon: Icon, label, value, copyable }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 0", borderBottom: "1px solid #1e2338" }}>
-      <Icon size={14} color="#7d8199" style={{ flexShrink: 0 }} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 10.5, color: "#7d8199" }}>{label}</div>
-        <div style={{ fontSize: 12.5, fontWeight: 600, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {value}
-        </div>
-      </div>
-      {copyable && value && value !== "-" && (
-        <button
-          onClick={() => navigator.clipboard?.writeText(value)}
-          style={{ background: "#1a1e33", border: "1px solid #2a2f4a", borderRadius: 8, padding: 6, color: "#9aa0bd", cursor: "pointer", flexShrink: 0 }}
-        >
-          <Copy size={12} />
-        </button>
-      )}
-    </div>
-  );
-}
-
 function VercelProject() {
   const [data, setData] = useState(null);
   const [search, setSearch] = useState("");
@@ -1366,7 +1322,7 @@ function VercelProject() {
 
   return (
     <div>
-      <SectionTitle title="Project Vercel" sub="Monitoring deployment, status domain, & usage" />
+      <SectionTitle title="Vercel" sub="Monitoring deployment, status domain, & usage" />
 
       <div
         style={{
@@ -1636,7 +1592,7 @@ function VercelProject() {
                 ) : (
                   p.deployments?.map((d) => (
                     <div key={d.id} style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 8, padding: "8px 10px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <div style={{ display: "flex", justifyBetween: "space-between", alignItems: "center", marginBottom: 4 }}>
                         <span style={{ fontSize: 10, fontWeight: 700, color: d.state === "READY" ? "#4dd6c4" : "#ff8a9b" }}>
                           {d.state}
                         </span>
@@ -1661,6 +1617,283 @@ function VercelProject() {
           75%, 100% { transform: scale(2); opacity: 0; }
         }
       `}</style>
+    </div>
+  );
+}
+
+function NetlifyProject() {
+  const [data, setData] = useState(null);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
+
+  useEffect(() => {
+    fetch("/api/netlify")
+      .then((r) => r.json())
+      .then(setData)
+      .catch(() => {});
+  }, []);
+
+  const projects = data?.projects || [];
+  const liveCount = projects.filter((p) => p.domain_status?.dns_configured).length;
+
+  const filteredProjects = projects.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchesFilter =
+      filter === "All" ||
+      (filter === "Live" && p.domain_status?.dns_configured);
+    return matchesSearch && matchesFilter;
+  });
+
+  return (
+    <div>
+      <SectionTitle title="Netlify" sub="Monitoring deployment, edge functions, & propagasi domain SSL" />
+
+      {/* Health Banner */}
+      <div
+        style={{
+          background: "#12162a",
+          border: "1px solid #1e2338",
+          borderRadius: 14,
+          padding: "12px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 14,
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ position: "relative", width: 10, height: 10 }}>
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                borderRadius: "50%",
+                background: "#4dd6c4",
+                animation: "ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
+                opacity: 0.75,
+              }}
+            />
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4dd6c4" }} />
+          </div>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: "#e7e9f3" }}>
+            Netlify System Health: {data?.health || "Operational"}
+          </span>
+        </div>
+        <span style={{ fontSize: 11, color: "#7d8199" }}>All Global CDN & Edge Functions Active</span>
+      </div>
+
+      {/* Plan Usage */}
+      <Card style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>Free Tier Usage</span>
+          <span style={{ fontSize: 10.5, color: "#7d8199", background: "#1a1e33", padding: "2px 8px", borderRadius: 6 }}>
+            Bulan Ini
+          </span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7d8199", marginBottom: 4 }}>
+              <span>Bandwidth ({data?.usage?.bandwidth_limit_gb || 100} GB)</span>
+              <span style={{ color: "#4dd6c4", fontWeight: 600 }}>~{data?.usage?.bandwidth_used_gb || 1.2} GB</span>
+            </div>
+            <div style={{ width: "100%", height: 6, background: "#1a1e33", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ width: `${((data?.usage?.bandwidth_used_gb || 1.2) / (data?.usage?.bandwidth_limit_gb || 100)) * 100}%`, height: "100%", background: "#4dd6c4" }} />
+            </div>
+          </div>
+
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7d8199", marginBottom: 4 }}>
+              <span>Build Minutes ({data?.usage?.build_minutes_limit || 300} min)</span>
+              <span style={{ color: "#5b8def", fontWeight: 600 }}>{data?.usage?.build_minutes_used || 15} min</span>
+            </div>
+            <div style={{ width: "100%", height: 6, background: "#1a1e33", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ width: `${((data?.usage?.build_minutes_used || 15) / (data?.usage?.build_minutes_limit || 300)) * 100}%`, height: "100%", background: "#5b8def" }} />
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Mini Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 14 }}>
+        <MiniStat icon={Layers} tint="#00c7b7" label="Total Sites" value={data ? projects.length : "-"} />
+        <MiniStat icon={CircleCheck} tint="#4dd6c4" label="Status Live" value={data ? liveCount : "-"} />
+        <MiniStat icon={Globe} tint="#c084fc" label="Domain Aktif" value={data ? liveCount : "-"} />
+      </div>
+
+      {/* Search Bar & Filter */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px" }}>
+          <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
+          <input
+            type="text"
+            placeholder="Cari project Netlify..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#e7e9f3", fontSize: 12.5 }}
+          />
+        </div>
+
+        <div style={{ display: "flex", gap: 6 }}>
+          {["All", "Live"].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              style={{
+                background: filter === f ? "#00c7b7" : "#12162a",
+                border: "1px solid",
+                borderColor: filter === f ? "#00c7b7" : "#1e2338",
+                color: filter === f ? "#fff" : "#8b8fa8",
+                borderRadius: 8,
+                padding: "4px 12px",
+                fontSize: 11.5,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {f === "Live" ? "Domain Live" : "Semua Project"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {!data && <p style={{ color: "#7d8199", fontSize: 13 }}>Memuat data Netlify...</p>}
+      {data && data.error && (
+        <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{data.error}</p></Card>
+      )}
+
+      {/* Project Grid Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14, alignItems: "start" }}>
+        {filteredProjects.map((p) => (
+          <div
+            key={p.id}
+            style={{
+              background: "#12162a",
+              border: "1px solid #1e2338",
+              borderRadius: 16,
+              padding: 16,
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                width: 120,
+                height: 120,
+                background: `radial-gradient(circle at top right, #00c7b722, transparent 70%)`,
+                pointerEvents: "none",
+              }}
+            />
+
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 8, background: "#00c7b718", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Layers size={16} color="#00c7b7" />
+                  </div>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {p.name}
+                  </span>
+                </div>
+
+                <span style={{ fontSize: 9, fontWeight: 700, background: "#4dd6c422", color: "#4dd6c4", padding: "2px 6px", borderRadius: 4, border: "1px solid #4dd6c444" }}>
+                  PUBLISHED
+                </span>
+              </div>
+
+              <div style={{ fontSize: 11, color: "#8b8fa8", marginBottom: 10 }}>
+                Branch: <span style={{ color: "#e7e9f3", fontWeight: 600 }}>{p.build_settings?.branch || "main"}</span>
+              </div>
+
+              {/* Fitur Spesifik Netlify: Edge Functions & SSL Check */}
+              <div style={{ background: "#0e1120", border: "1px solid #1a1e33", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
+                  <span style={{ color: "#7d8199", display: "flex", alignItems: "center", gap: 5 }}>
+                    <Code2 size={12} color="#5b8def" /> Edge Functions:
+                  </span>
+                  <span style={{ fontWeight: 700, color: "#5b8def", background: "#5b8def18", padding: "2px 6px", borderRadius: 4 }}>
+                    {p.functions_count || 0} Active
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
+                  <span style={{ color: "#7d8199", display: "flex", alignItems: "center", gap: 5 }}>
+                    <ShieldCheck size={12} color="#4dd6c4" /> Domain & SSL:
+                  </span>
+                  <span style={{ fontWeight: 700, color: "#4dd6c4" }}>
+                    {p.domain_status?.ssl || "Active"}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: 10.5, color: "#8b8fa8", borderTop: "1px border #1a1e33", paddingTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {p.domain_status?.custom_domain || p.url}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10.5, color: "#7d8199", marginBottom: 10, paddingTop: 8, borderTop: "1px solid #1a1e33" }}>
+                <span>Updated: {p.updated_at ? new Date(p.updated_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-"}</span>
+                <span>Provider: <strong style={{ color: "#a7abc2" }}>{p.build_settings?.provider?.toUpperCase() || "GITHUB"}</strong></span>
+              </div>
+
+              <div style={{ display: "flex", gap: 6 }}>
+                <a
+                  href={p.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 4,
+                    background: "#00c7b7",
+                    color: "#0a0c14",
+                    padding: "7px 10px",
+                    borderRadius: 8,
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    textDecoration: "none",
+                  }}
+                >
+                  Kunjungi Web <ExternalLink size={12} />
+                </a>
+
+                {p.admin_url && (
+                  <a
+                    href={p.admin_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      background: "#1a1e33",
+                      border: "1px solid #2a2f4a",
+                      color: "#e7e9f3",
+                      padding: "7px 10px",
+                      borderRadius: 8,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      textDecoration: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    Admin
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1901,6 +2134,7 @@ export default function DashboardPage() {
         {tab === "overview" && <Overview onOpenMusic={music.openSearch} onOpenChat={() => chat.setOpen(true)} />}
         {tab === "projects" && <Projects />}
         {tab === "vercel" && <VercelProject />}
+        {tab === "netlify" && <NetlifyProject />}
         {tab === "database" && <DatabasePanel />}
       </main>
 
