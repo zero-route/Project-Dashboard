@@ -4,7 +4,6 @@ export async function GET() {
   try {
     const token = process.env.NETLIFY_TOKEN;
 
-    // Jika token tidak dipasang di Environment Variables Vercel
     if (!token) {
       return NextResponse.json(
         {
@@ -22,10 +21,9 @@ export async function GET() {
       "Content-Type": "application/json",
     };
 
-    // 1. Fetch daftar sites (projects) dari Netlify API
     const sitesRes = await fetch("https://api.netlify.com/api/v1/sites", {
       headers,
-      next: { revalidate: 60 }, // Cache revalidation tiap 60 detik (sesuai Next.js App Router)
+      next: { revalidate: 60 },
     });
 
     if (!sitesRes.ok) {
@@ -34,12 +32,12 @@ export async function GET() {
 
     const sites = await sitesRes.json();
 
-    // 2. Map & Fetch detail tambahan (Edge Functions & SSL status) untuk tiap site
     const formattedProjects = await Promise.all(
       sites.map(async (site) => {
         let functionsCount = 0;
+        let deploys = [];
 
-        // Cek Functions / Edge Functions aktif di site ini
+        // Fetch Functions Count
         try {
           const fnRes = await fetch(
             `https://api.netlify.com/api/v1/sites/${site.id}/functions`,
@@ -53,7 +51,26 @@ export async function GET() {
           functionsCount = 0;
         }
 
-        // Tentukan status SSL & Custom Domain
+        // Fetch 5 Deploys Terakhir
+        try {
+          const deploysRes = await fetch(
+            `https://api.netlify.com/api/v1/sites/${site.id}/deploys?per_page=5`,
+            { headers, next: { revalidate: 60 } }
+          );
+          if (deploysRes.ok) {
+            const deploysData = await deploysRes.json();
+            deploys = (Array.isArray(deploysData) ? deploysData : []).map((d) => ({
+              id: d.id,
+              state: d.state?.toUpperCase() === "READY" ? "READY" : d.state?.toUpperCase() || "BUILDING",
+              createdAt: d.created_at,
+              commitMessage: d.title || d.commit_ref || "Manual deploy / no commit msg",
+              context: d.context || "production",
+            }));
+          }
+        } catch (e) {
+          deploys = [];
+        }
+
         const hasCustomDomain = !!site.custom_domain;
         const sslStatus = site.ssl
           ? site.ssl_plan
@@ -78,16 +95,16 @@ export async function GET() {
             ssl: sslStatus,
             dns_configured: hasCustomDomain || !!site.default_domain,
           },
+          deployments: deploys,
         };
       })
     );
 
-    // 3. Response JSON standar (setara struktur vercel/cloudflare)
     return NextResponse.json({
       configured: true,
       health: "Operational",
       usage: {
-        bandwidth_used_gb: 1.2, // Nilai kalkulasi estimasi/statik (API penggunaan kuota Netlify memerlukan akses tim khusus)
+        bandwidth_used_gb: 1.2,
         bandwidth_limit_gb: 100,
         build_minutes_used: 15,
         build_minutes_limit: 300,
