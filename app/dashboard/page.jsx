@@ -269,7 +269,7 @@ function MusicPlayerUI({ music }) {
                 <button onClick={togglePlay} style={{ width: 50, height: 50, borderRadius: "50%", background: "#e7e9f3", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                   {isPlaying ? <Pause size={22} color="#0a0c14" fill="#0a0c14" /> : <Play size={22} color="#0a0c14" fill="#0a0c14" style={{ marginLeft: 2 }} />}
                 </button>
-                <button onClick={handleNext} style={{ background: "none", border: "none", color: "#e7e9f3", cursor: "pointer" }}>
+                <button onClick={handleNext} style={{ background: "none", border: "none", color="#e7e9f3", cursor: "pointer" }}>
                   <SkipForward size={22} fill="#e7e9f3" />
                 </button>
               </div>
@@ -562,13 +562,6 @@ function LatencyOverviewCard({ latency }) {
     { name: "Cloudflare Workers", ms: latency.cloudflare },
   ];
 
-  const getStatusColor = (ms) => {
-    if (!ms) return "#7d8199";
-    if (ms < 300) return "#4dd6c4";
-    if (ms < 800) return "#facc15";
-    return "#ff8a9b";
-  };
-
   return (
     <Card style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -576,10 +569,10 @@ function LatencyOverviewCard({ latency }) {
         <span style={{ fontSize: 10.5, color: "#7d8199" }}>Real-time Ping</span>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
         {items.map((it) => {
-          const statusColor = getStatusColor(it.ms);
-          const pct = Math.min(100, Math.round(((it.ms || 0) / 1200) * 100));
+          const fillPercentage = Math.min(100, Math.round(((it.ms || 0) / 1000) * 100));
+          const fillColor = "#4dd6c4";
 
           return (
             <div 
@@ -596,7 +589,7 @@ function LatencyOverviewCard({ latency }) {
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5 }}>
                 <span style={{ color: "#e7e9f3", fontWeight: 600 }}>{it.name}</span>
-                <span style={{ fontWeight: 700, color: statusColor, fontSize: 13 }}>
+                <span style={{ fontWeight: 700, color: fillColor, fontSize: 13 }}>
                   {it.ms ? `${it.ms} ms` : "Pinging..."}
                 </span>
               </div>
@@ -605,8 +598,8 @@ function LatencyOverviewCard({ latency }) {
                 <div 
                   style={{ 
                     height: "100%", 
-                    width: `${pct || 5}%`, 
-                    background: statusColor, 
+                    width: `${fillPercentage || 5}%`, 
+                    background: fillColor, 
                     borderRadius: 6,
                     transition: "width 0.5s ease-in-out" 
                   }} 
