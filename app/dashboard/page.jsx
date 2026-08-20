@@ -614,14 +614,29 @@ function useActivityWave() {
       .then((json) => {
         const points = json?.points || [];
         if (points.length > 0) {
+          const rawValues = points.map((p) => p.y);
+          const maxVal = Math.max(...rawValues, 1);
 
-          const maxCommitThreshold = Math.max(...points.map((p) => p.y), 20); 
-          const scaled = points.map((p) => ({
+          // 1. Skala murni ke 0-100
+          const scaledRaw = rawValues.map((v) => Math.min(100, Math.round((v / maxVal) * 100)));
+
+          // 2. Terapkan Moving Average agar pergerakan kurva mulus & tidak anjlok mendadak di ujung
+          const smoothed = scaledRaw.map((val, idx, arr) => {
+            if (idx === 0) return val;
+            const prev = arr[idx - 1];
+            // Mencegah penurunan drastis di titik terakhir jika hari ini commit masih berjalan
+            if (idx === arr.length - 1 && val < prev) {
+              return Math.round((prev * 0.7) + (val * 0.3));
+            }
+            return Math.round((prev + val) / 2);
+          });
+
+          const formattedData = points.map((p, i) => ({
             x: p.x,
-            // Memastikan data terpetakan presisi di skala 0 - 100
-            y: Math.min(100, Math.round((p.y / maxCommitThreshold) * 100))
+            y: smoothed[i],
           }));
-          setData(scaled);
+
+          setData(formattedData);
           setSource("github");
         }
       })
@@ -630,6 +645,7 @@ function useActivityWave() {
 
   return { data, source };
 }
+
 
 function useApiLatency() {
   const [latency, setLatency] = useState({});
@@ -874,7 +890,6 @@ function Overview({ onOpenMusic, onOpenChat }) {
     </defs>
     <CartesianGrid stroke="#1e2338" vertical={false} />
     <XAxis dataKey="x" hide />
-    {/* YAxis diset ketat 0 - 100 dengan tick tersusun rapi */}
     <YAxis 
       orientation="right" 
       domain={[0, 100]} 
@@ -884,18 +899,17 @@ function Overview({ onOpenMusic, onOpenChat }) {
       tickLine={false} 
       axisLine={false} 
     />
-    {/* Mengubah monotone ke linear agar pergerakan commit akurat sesuai data tanpa kurva lengkung palsu */}
+    {/* Kembali menggunakan monotone agar kurva mulus melengkung */}
     <Area 
-      type="linear" 
+      type="monotone" 
       dataKey="y" 
       stroke="#5b8def" 
       fill="url(#waveGrad)" 
-      strokeWidth={2} 
+      strokeWidth={2.5} 
       isAnimationActive={true} 
     />
   </AreaChart>
 </ResponsiveContainer>
-
       </Card>
 
       <div className="grid-3" style={{ marginBottom: 14 }}>
