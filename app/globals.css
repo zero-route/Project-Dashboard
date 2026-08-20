@@ -4,7 +4,10 @@
 }
 
 body {
-  margin: 0; background: #0a0c14; 
+  margin: 0;
+  background: #0a0c14; 
+  color: #e7e9f3;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 .layout {
@@ -38,6 +41,7 @@ body {
   min-width: 0;
   padding: 18px 20px 28px;
   max-width: 1200px;
+  margin: 0 auto;
 }
 
 .topbar {
@@ -61,6 +65,7 @@ body {
   flex-shrink: 0;
 }
 
+/* === GRID LAYOUT DESKTOP (DEFAULT) === */
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -86,16 +91,39 @@ body {
 .hero-icons { grid-column: 3; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 14px; }
 .hero-calendar { grid-column: 1 / span 2; grid-row: 2; }
 
+/* === RESPONSIVE LAYOUT (MOBILE) === */
 @media (max-width: 760px) {
-  .grid-2, .grid-3 {
-    grid-template-columns: 1fr 1fr;
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Di HP/Mobile bertumpuk 1 kolom ke bawah */
+  .grid-3 {
+    grid-template-columns: 1fr;
   }
 
   .hero-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
-  .hero-clock { grid-column: 1; grid-row: 1; }
-  .hero-github { grid-column: 2; grid-row: 1; }
-  .hero-calendar { grid-column: 1 / span 2; grid-row: 2; }
-  .hero-icons { grid-column: 1 / span 2; grid-row: 3; flex-direction: row; }
+  
+  .hero-clock { 
+    grid-column: 1; 
+    grid-row: 1; 
+  }
+  
+  .hero-github { 
+    grid-column: 1; 
+    grid-row: 2; 
+  }
+  
+  .hero-calendar { 
+    grid-column: 1; 
+    grid-row: 3; 
+  }
+  
+  .hero-icons { 
+    grid-column: 1; 
+    grid-row: 4; 
+    flex-direction: row; 
+  }
 }
