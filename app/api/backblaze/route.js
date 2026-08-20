@@ -2,31 +2,30 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    let keyId = process.env.B2_APPLICATION_KEY_ID?.trim();
-    const applicationKey = process.env.B2_APPLICATION_KEY?.trim();
+    // Pakai replace untuk buang spasi, new line, atau kutip yang tak sengaja terikut
+    const keyId = (process.env.B2_APPLICATION_KEY_ID || "").replace(/['"\s]/g, "");
+    const applicationKey = (process.env.B2_APPLICATION_KEY || "").replace(/['"\s]/g, "");
 
     if (!keyId || !applicationKey) {
       return NextResponse.json(
         {
           configured: false,
           health: "Unknown",
-          message: "Key ID atau Application Key belum diatur di Vercel.",
+          message: "Key ID atau Application Key belum diset di Vercel.",
           buckets: [],
         },
         { status: 200 }
       );
     }
 
-    // PENTING: Jika menggunakan Master Key (keyID pendek/12 karakter), 
-    // Backblaze mewajibkan awalan 004 agar formatnya sesuai dengan API spec.
-    if (keyId.length === 12 && !keyId.startsWith("004")) {
-      keyId = `004${keyId}`;
-    }
+    // Opsi otentikasi resmi Backblaze B2 (Basic Auth: keyID:applicationKey)
+    const credentials = Buffer.from(`${keyId}:${applicationKey}`).toString("base64");
 
-    // Authenticate ke Backblaze B2 via Basic Auth
-    const authHeader = Buffer.from(`${keyId}:${applicationKey}`).toString("base64");
     const authRes = await fetch("https://api.backblazeb2.com/b2api/v3/b2_authorize_account", {
-      headers: { Authorization: `Basic ${authHeader}` },
+      method: "GET",
+      headers: {
+        Authorization: `Basic ${credentials}`,
+      },
       cache: "no-store",
     });
 
@@ -44,7 +43,7 @@ export async function GET() {
       );
     }
 
-    // Fetch list buckets
+    // Ambil list buckets menggunakan URL resmi yang dikembalikan authData
     const bucketsRes = await fetch(`${authData.apiUrl}/b2api/v3/b2_list_buckets`, {
       method: "POST",
       headers: {
