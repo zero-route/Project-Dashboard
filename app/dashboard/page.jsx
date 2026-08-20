@@ -1625,6 +1625,7 @@ function NetlifyProject() {
   const [data, setData] = useState(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
+  const [expandedProjects, setExpandedProjects] = useState({});
 
   useEffect(() => {
     fetch("/api/netlify")
@@ -1632,6 +1633,10 @@ function NetlifyProject() {
       .then(setData)
       .catch(() => {});
   }, []);
+
+  const toggleExpand = (id) => {
+    setExpandedProjects((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const projects = data?.projects || [];
   const liveCount = projects.filter((p) => p.domain_status?.dns_configured).length;
@@ -1684,7 +1689,7 @@ function NetlifyProject() {
         <span style={{ fontSize: 11, color: "#7d8199" }}>All Global CDN & Edge Functions Active</span>
       </div>
 
-      {/* Plan Usage */}
+      {/* Usage Bar */}
       <Card style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>Free Tier Usage</span>
@@ -1722,7 +1727,7 @@ function NetlifyProject() {
         <MiniStat icon={Globe} tint="#c084fc" label="Domain Aktif" value={data ? liveCount : "-"} />
       </div>
 
-      {/* Search Bar & Filter */}
+      {/* Search & Filter */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#12162a", border: "1px solid #1e2338", borderRadius: 10, padding: "7px 10px" }}>
           <Search size={14} color="#7d8199" style={{ flexShrink: 0 }} />
@@ -1763,115 +1768,117 @@ function NetlifyProject() {
         <Card><p style={{ color: "#ff8a9b", fontSize: 13, margin: 0 }}>{data.error}</p></Card>
       )}
 
-      {/* Project Grid Cards */}
+      {/* Grid Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14, alignItems: "start" }}>
-        {filteredProjects.map((p) => (
-          <div
-            key={p.id}
-            style={{
-              background: "#12162a",
-              border: "1px solid #1e2338",
-              borderRadius: 16,
-              padding: 16,
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
+        {filteredProjects.map((p) => {
+          const isExpanded = !!expandedProjects[p.id];
+          const latestDeploy = p.deployments?.[0];
+
+          return (
             <div
+              key={p.id}
               style={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                width: 120,
-                height: 120,
-                background: `radial-gradient(circle at top right, #00c7b722, transparent 70%)`,
-                pointerEvents: "none",
+                background: "#12162a",
+                border: "1px solid #1e2338",
+                borderRadius: 16,
+                padding: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                position: "relative",
+                overflow: "hidden",
               }}
-            />
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  width: 120,
+                  height: 120,
+                  background: `radial-gradient(circle at top right, #00c7b722, transparent 70%)`,
+                  pointerEvents: "none",
+                }}
+              />
 
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: "#00c7b718", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Layers size={16} color="#00c7b7" />
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: "#00c7b718", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Layers size={16} color="#00c7b7" />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {p.name}
+                    </span>
                   </div>
-                  <span style={{ fontWeight: 700, fontSize: 14, color: "#f2f3fa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {p.name}
+
+                  <span style={{ fontSize: 9, fontWeight: 700, background: "#4dd6c422", color: "#4dd6c4", padding: "2px 6px", borderRadius: 4, border: "1px solid #4dd6c444" }}>
+                    PUBLISHED
                   </span>
                 </div>
 
-                <span style={{ fontSize: 9, fontWeight: 700, background: "#4dd6c422", color: "#4dd6c4", padding: "2px 6px", borderRadius: 4, border: "1px solid #4dd6c444" }}>
-                  PUBLISHED
-                </span>
-              </div>
-
-              <div style={{ fontSize: 11, color: "#8b8fa8", marginBottom: 10 }}>
-                Branch: <span style={{ color: "#e7e9f3", fontWeight: 600 }}>{p.build_settings?.branch || "main"}</span>
-              </div>
-
-              {/* Fitur Spesifik Netlify: Edge Functions & SSL Check */}
-              <div style={{ background: "#0e1120", border: "1px solid #1a1e33", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
-                  <span style={{ color: "#7d8199", display: "flex", alignItems: "center", gap: 5 }}>
-                    <Code2 size={12} color="#5b8def" /> Edge Functions:
-                  </span>
-                  <span style={{ fontWeight: 700, color: "#5b8def", background: "#5b8def18", padding: "2px 6px", borderRadius: 4 }}>
-                    {p.functions_count || 0} Active
-                  </span>
+                <div style={{ fontSize: 11, color: "#8b8fa8", marginBottom: 10 }}>
+                  Branch: <span style={{ color: "#e7e9f3", fontWeight: 600 }}>{p.build_settings?.branch || "main"}</span>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
-                  <span style={{ color: "#7d8199", display: "flex", alignItems: "center", gap: 5 }}>
-                    <ShieldCheck size={12} color="#4dd6c4" /> Domain & SSL:
-                  </span>
-                  <span style={{ fontWeight: 700, color: "#4dd6c4" }}>
-                    {p.domain_status?.ssl || "Active"}
-                  </span>
-                </div>
+                {/* Info Edge Functions & SSL Check */}
+                <div style={{ background: "#0e1120", border: "1px solid #1a1e33", borderRadius: 10, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
+                    <span style={{ color: "#7d8199", display: "flex", alignItems: "center", gap: 5 }}>
+                      <Code2 size={12} color="#5b8def" /> Edge Functions:
+                    </span>
+                    <span style={{ fontWeight: 700, color: "#5b8def", background: "#5b8def18", padding: "2px 6px", borderRadius: 4 }}>
+                      {p.functions_count || 0} Active
+                    </span>
+                  </div>
 
-                <div style={{ fontSize: 10.5, color: "#8b8fa8", borderTop: "1px border #1a1e33", paddingTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {p.domain_status?.custom_domain || p.url}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
+                    <span style={{ color: "#7d8199", display: "flex", alignItems: "center", gap: 5 }}>
+                      <ShieldCheck size={12} color="#4dd6c4" /> Domain & SSL:
+                    </span>
+                    <span style={{ fontWeight: 700, color: "#4dd6c4" }}>
+                      {p.domain_status?.ssl || "Active"}
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: 10.5, color: "#8b8fa8", borderTop: "1px solid #1a1e33", paddingTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {p.domain_status?.custom_domain || p.url}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10.5, color: "#7d8199", marginBottom: 10, paddingTop: 8, borderTop: "1px solid #1a1e33" }}>
-                <span>Updated: {p.updated_at ? new Date(p.updated_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-"}</span>
-                <span>Provider: <strong style={{ color: "#a7abc2" }}>{p.build_settings?.provider?.toUpperCase() || "GITHUB"}</strong></span>
-              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10.5, color: "#7d8199", marginBottom: 10, paddingTop: 8, borderTop: "1px solid #1a1e33" }}>
+                  <span>Updated: {p.updated_at ? new Date(p.updated_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-"}</span>
+                  <span>Provider: <strong style={{ color: "#a7abc2" }}>{p.build_settings?.provider?.toUpperCase() || "GITHUB"}</strong></span>
+                </div>
 
-              <div style={{ display: "flex", gap: 6 }}>
-                <a
-                  href={p.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 4,
-                    background: "#00c7b7",
-                    color: "#0a0c14",
-                    padding: "7px 10px",
-                    borderRadius: 8,
-                    fontSize: 11.5,
-                    fontWeight: 700,
-                    textDecoration: "none",
-                  }}
-                >
-                  Kunjungi Web <ExternalLink size={12} />
-                </a>
-
-                {p.admin_url && (
+                {/* Action Buttons: Kunjungi Web & History Toggle */}
+                <div style={{ display: "flex", gap: 6 }}>
                   <a
-                    href={p.admin_url}
+                    href={p.url}
                     target="_blank"
                     rel="noreferrer"
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 4,
+                      background: "#00c7b7",
+                      color: "#0a0c14",
+                      padding: "7px 10px",
+                      borderRadius: 8,
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Kunjungi Web <ExternalLink size={12} />
+                  </a>
+
+                  <button
+                    onClick={() => toggleExpand(p.id)}
                     style={{
                       background: "#1a1e33",
                       border: "1px solid #2a2f4a",
@@ -1880,19 +1887,59 @@ function NetlifyProject() {
                       borderRadius: 8,
                       fontSize: 11,
                       fontWeight: 600,
-                      textDecoration: "none",
+                      cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
                       gap: 4,
                     }}
                   >
-                    Admin
-                  </a>
+                    History <ChevronDown size={14} style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Log History Drawer (Slide Down + Fade In) */}
+              <div
+                style={{
+                  maxHeight: isExpanded ? "400px" : "0px",
+                  opacity: isExpanded ? 1 : 0,
+                  overflow: "hidden",
+                  transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                  marginTop: isExpanded ? 4 : 0,
+                  paddingTop: isExpanded ? 10 : 0,
+                  borderTop: isExpanded ? "1px solid #1e2338" : "1px solid transparent",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: "#7d8199", letterSpacing: 0.5 }}>
+                  5 DEPLOYMENT TERAKHIR
+                </div>
+
+                {p.deployments?.length === 0 ? (
+                  <div style={{ fontSize: 11, color: "#7d8199" }}>Belum ada riwayat deployment.</div>
+                ) : (
+                  p.deployments?.map((d) => (
+                    <div key={d.id} style={{ background: "#0e1120", border: "1px solid #1e2338", borderRadius: 8, padding: "8px 10px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: d.state === "READY" ? "#4dd6c4" : "#ff8a9b" }}>
+                          {d.state}
+                        </span>
+                        <span style={{ fontSize: 9.5, color: "#7d8199" }}>
+                          {new Date(d.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "#e7e9f3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {d.commitMessage}
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
