@@ -557,40 +557,60 @@ function IconStatCard({ icon: Icon, label, tint, note }) {
   );
 }
 
-function DonutCard({ title, data, centerLabel, centerValue }) {
-  const total = data.reduce((s, d) => s + (d.value || 0), 0);
+function LatencyOverviewCard({ latency }) {
+  const items = [
+    { name: "Supabase DB", ms: latency.supabase, color: "#3ecf8e" },
+    { name: "Vercel Edge", ms: latency.vercel, color: "#5b8def" },
+    { name: "Cloudflare Workers", ms: latency.cloudflare, color: "#f38020" },
+  ];
+
+  const getStatusColor = (ms) => {
+    if (!ms) return "#7d8199";
+    if (ms < 300) return "#4dd6c4"; // Fast
+    if (ms < 800) return "#facc15"; // Medium
+    return "#ff8a9b"; // Slow
+  };
+
   return (
-    <Card>
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>{title}</div>
-      {total === 0 ? (
-        <div style={{ fontSize: 12, color: "#7d8199", padding: "30px 0", textAlign: "center" }}>Belum ada data</div>
-      ) : (
-        <div style={{ position: "relative" }}>
-          <ResponsiveContainer width="100%" height={170}>
-            <PieChart>
-              <Pie data={data} dataKey="value" nameKey="name" innerRadius={48} outerRadius={68} paddingAngle={3}>
-                {data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-              </Pie>
-              <Tooltip contentStyle={{ background: "#181c30", border: "1px solid #2a2f4a", borderRadius: 8, fontSize: 12 }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", pointerEvents: "none" }}>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>{centerValue}</div>
-            <div style={{ fontSize: 10, color: "#7d8199" }}>{centerLabel}</div>
-          </div>
-        </div>
-      )}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 10, justifyContent: "center" }}>
-        {data.map((d, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#a7abc2" }}>
-            <span style={{ width: 8, height: 8, borderRadius: 4, background: PIE_COLORS[i % PIE_COLORS.length] }} />
-            {d.name}
-          </div>
-        ))}
+    <Card style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#e7e9f3" }}>API Latency & Health</span>
+        <span style={{ fontSize: 10.5, color: "#7d8199" }}>Real-time Ping</span>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {items.map((it) => {
+          const statusColor = getStatusColor(it.ms);
+          // Scale max 1500ms
+          const pct = Math.min(100, Math.round(((it.ms || 0) / 1200) * 100));
+
+          return (
+            <div key={it.name}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
+                <span style={{ color: "#a7abc2", fontWeight: 500 }}>{it.name}</span>
+                <span style={{ fontWeight: 700, color: statusColor }}>
+                  {it.ms ? `${it.ms} ms` : "Pinging..."}
+                </span>
+              </div>
+              <div style={{ height: 6, width: "100%", background: "#0e1120", borderRadius: 4, overflow: "hidden" }}>
+                <div 
+                  style={{ 
+                    height: "100%", 
+                    width: `${pct || 5}%`, 
+                    background: statusColor, 
+                    borderRadius: 4,
+                    transition: "width 0.5s ease-in-out" 
+                  }} 
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </Card>
   );
 }
+
 
 function useClock() {
   const [now, setNow] = useState(null);
