@@ -2282,6 +2282,10 @@ export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const music = useMusicPlayer();
   const chat = useChatBot();
+  
+  useEffect(() => {
+  fetch("/api/visitor", { method: "POST" }).catch(() => {});
+}, []);
 
   return (
     <div className="layout" style={{ position: "relative", minHeight: "100vh" }}>
